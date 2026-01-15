@@ -1011,11 +1011,19 @@
             </div>
         </div>
 
+        <!-- 我的最愛區域 -->
+        <div id="favoritesBox" class="search-box" style="display:none; margin-top: 20px;">
+            <h3 style="color: #e0e0e0; margin-bottom: 15px;">💖 我的最愛股票</h3>
+            <div id="favoritesList"></div>
+        </div>
+
         <div class="result-box" id="resultBox">
             <div id="resultContent"></div>
             <div class="chart-controls" id="chartControls" style="display:none;">
                 <button class="chart-btn active" onclick="switchChart('kline')">📊 K線圖</button>
                 <button class="chart-btn" onclick="switchChart('line')">📈 高低曲線</button>
+                <button class="chart-btn" onclick="switchChart('volume')">📦 成交量</button>
+                <button class="chart-btn" onclick="switchChart('ma')">📉 移動平均</button>
             </div>
             <div class="content-grid" id="contentGrid" style="display:none;">
                 <div>
@@ -1026,7 +1034,6 @@
                     <div id="newsList">載入中...</div>
                 </div>
             </div>
-            <div id="favoritesList" style="margin-top: 16px;"></div>
         </div>
     </div>
 
@@ -1068,6 +1075,8 @@
                 // Charts
                 klineChart: '📊 K線圖',
                 lineChart: '📈 高低曲線',
+                volumeChart: '📦 成交量',
+                maChart: '📉 移動平均',
                 highLowLine: '歷史高低曲線',
                 highLabel: '最高價',
                 lowLabel: '最低價',
@@ -1124,6 +1133,8 @@
                 // Charts
                 klineChart: '📊 K-Line',
                 lineChart: '📈 High-Low Line',
+                volumeChart: '📦 Volume',
+                maChart: '📉 Moving Avg',
                 highLowLine: 'Historical High-Low Line',
                 highLabel: 'High',
                 lowLabel: 'Low',
@@ -1195,6 +1206,8 @@
             const chartBtns = document.querySelectorAll('.chart-btn');
             if (chartBtns[0]) chartBtns[0].textContent = t('klineChart');
             if (chartBtns[1]) chartBtns[1].textContent = t('lineChart');
+            if (chartBtns[2]) chartBtns[2].textContent = t('volumeChart');
+            if (chartBtns[3]) chartBtns[3].textContent = t('maChart');
             
             // News panel
             const newsTitle = document.querySelector('#newsPanel h3');
@@ -1256,6 +1269,7 @@
             currentSession = { userId: null, isAdmin: false };
             document.getElementById('authPanel').classList.remove('hidden');
             document.getElementById('mainPanel').classList.add('hidden');
+            document.getElementById('favoritesBox').style.display = 'none';
             document.getElementById('resultBox').classList.remove('show');
             document.getElementById('authUserId').value = '';
             document.getElementById('authPassword').value = '';
@@ -1264,12 +1278,15 @@
         function updateUIAfterLogin() {
             document.getElementById('authPanel').classList.add('hidden');
             document.getElementById('mainPanel').classList.remove('hidden');
+            document.getElementById('favoritesBox').style.display = 'block';
             document.getElementById('currentUser').textContent = currentSession.userId;
             if (currentSession.isAdmin) {
                 document.getElementById('adminBadge').classList.remove('hidden');
             } else {
                 document.getElementById('adminBadge').classList.add('hidden');
             }
+            // 自動載入最愛
+            loadMyFavorites();
         }
 
         function quickSearch(stockCode) {
@@ -1405,8 +1422,12 @@
             
             if (chartType === 'kline') {
                 renderKline(window.currentHistoryData);
-            } else {
+            } else if (chartType === 'line') {
                 renderLineChart(window.currentHistoryData);
+            } else if (chartType === 'volume') {
+                renderVolumeChart(window.currentHistoryData);
+            } else if (chartType === 'ma') {
+                renderMAChart(window.currentHistoryData);
             }
         }
 
@@ -1450,15 +1471,15 @@
                 });
                 const data = await res.json();
                 if (!data.success) throw new Error(data.message || '加入最愛失敗');
+                alert(t('addFavSuccess'));
                 await loadMyFavorites();
             } catch (e) {
-                alert('加入最愛失敗：' + e.message);
+                alert(t('addFavFailed') + '：' + e.message);
             }
         }
 
         async function loadMyFavorites() {
             if (!currentSession.userId) {
-                alert(t('pleaseLogin'));
                 return;
             }
             try {
@@ -1475,9 +1496,9 @@
                         if (!grouped[uid]) grouped[uid] = [];
                         grouped[uid].push(it);
                     });
-                    let html = '<div style="margin-top:8px; color:#666; font-weight:bold;">👑 管理員模式：所有使用者的最愛</div>';
+                    let html = '<div style="margin-top:8px; color:#c0c0c0; font-weight:bold;">👑 管理員模式：所有使用者的最愛</div>';
                     for (const uid in grouped) {
-                        html += `<div style="margin-top:12px; color:#555; font-weight:bold;">👤 ${uid}</div>`;
+                        html += `<div style="margin-top:12px; color:#9ab5e7; font-weight:bold;">👤 ${uid}</div>`;
                         html += '<div style="display:flex; flex-wrap:wrap; gap:8px; margin-top:6px;">';
                         grouped[uid].forEach(it => {
                             const code = it.stock_code || '';
@@ -1494,10 +1515,14 @@
                         const name = it.stock_name || '';
                         return `<span class="stock-tag" onclick="quickSearch('${code}')">${code} ${name}</span>`;
                     }).join(' ');
-                    listEl.innerHTML = items ? `<div style="margin-top:8px; color:#666;">我的最愛：</div><div style="margin-top:6px; display:flex; flex-wrap:wrap; gap:8px;">${items}</div>` : '<div style="margin-top:8px; color:#999;">尚無最愛</div>';
+                    if (items) {
+                        listEl.innerHTML = '<div style="display:flex; flex-wrap:wrap; gap:8px;">' + items + '</div>';
+                    } else {
+                        listEl.innerHTML = '<div style="margin-top:8px; color:#999; text-align:center; padding:20px;">尚無最愛股票，請先查詢股票後點擊「加入最愛」按鈕</div>';
+                    }
                 }
             } catch (e) {
-                alert('讀取最愛失敗：' + e.message);
+                console.error('讀取最愛失敗：', e);
             }
         }
 
@@ -1733,6 +1758,280 @@
                 });
             } catch (e) {
                 console.error('Render line chart error:', e);
+            }
+        }
+
+        function renderVolumeChart(historyData) {
+            try {
+                const raw = historyData.data;
+                const rows = raw.slice(-60);
+                const dates = rows.map(r => normalizeDate(r[0]));
+                const volumes = rows.map(r => parseNumber(r[1])); // 成交股數
+                const amounts = rows.map(r => parseNumber(r[2])); // 成交金額
+
+                const el = document.getElementById('kline');
+                if (!el) return;
+                if (klineChart) {
+                    klineChart.dispose();
+                }
+                klineChart = echarts.init(el);
+
+                const option = {
+                    animation: true,
+                    backgroundColor: '#1a1a2e',
+                    title: { 
+                        text: currentLang === 'zh' ? '成交量與成交金額' : 'Trading Volume & Amount', 
+                        left: 'center',
+                        top: 10,
+                        textStyle: { fontSize: 16, color: '#e0e0e0', fontWeight: 'bold' } 
+                    },
+                    grid: { left: 60, right: 60, top: 90, bottom: 70 },
+                    tooltip: {
+                        trigger: 'axis',
+                        axisPointer: { type: 'shadow' },
+                        backgroundColor: 'rgba(50, 50, 70, 0.95)',
+                        borderColor: '#5a7fc7',
+                        borderWidth: 1,
+                        textStyle: { color: '#e0e0e0' },
+                        formatter: (params) => {
+                            let result = params[0].name + '<br/>';
+                            params.forEach(p => {
+                                const val = p.value ? Number(p.value).toLocaleString() : '-';
+                                result += p.marker + p.seriesName + ': ' + val + '<br/>';
+                            });
+                            return result;
+                        }
+                    },
+                    legend: {
+                        data: currentLang === 'zh' ? ['成交股數', '成交金額'] : ['Volume', 'Amount'],
+                        top: 45,
+                        textStyle: { color: '#c0c0c0', fontSize: 13 }
+                    },
+                    xAxis: {
+                        type: 'category',
+                        data: dates,
+                        axisLine: { lineStyle: { color: '#5a7fc7' } },
+                        axisLabel: { 
+                            color: '#c0c0c0',
+                            rotate: 45,
+                            fontSize: 10
+                        }
+                    },
+                    yAxis: [
+                        {
+                            type: 'value',
+                            name: currentLang === 'zh' ? '成交股數' : 'Volume',
+                            position: 'left',
+                            axisLine: { lineStyle: { color: '#5a7fc7' } },
+                            axisLabel: { 
+                                color: '#c0c0c0',
+                                formatter: (v) => (v / 1000).toFixed(0) + 'K'
+                            },
+                            splitLine: { lineStyle: { color: 'rgba(90, 127, 199, 0.15)' } },
+                            nameTextStyle: { color: '#c0c0c0' }
+                        },
+                        {
+                            type: 'value',
+                            name: currentLang === 'zh' ? '成交金額' : 'Amount',
+                            position: 'right',
+                            axisLine: { lineStyle: { color: '#5a7fc7' } },
+                            axisLabel: { 
+                                color: '#c0c0c0',
+                                formatter: (v) => (v / 1000000).toFixed(0) + 'M'
+                            },
+                            splitLine: { show: false },
+                            nameTextStyle: { color: '#c0c0c0' }
+                        }
+                    ],
+                    dataZoom: [
+                        { type: 'inside', start: 40, end: 100 },
+                        { start: 40, end: 100 }
+                    ],
+                    series: [
+                        {
+                            name: currentLang === 'zh' ? '成交股數' : 'Volume',
+                            type: 'bar',
+                            data: volumes,
+                            yAxisIndex: 0,
+                            itemStyle: { 
+                                color: {
+                                    type: 'linear',
+                                    x: 0, y: 0, x2: 0, y2: 1,
+                                    colorStops: [
+                                        { offset: 0, color: '#7aa3ff' },
+                                        { offset: 1, color: '#4a6fa5' }
+                                    ]
+                                }
+                            },
+                            barMaxWidth: 20
+                        },
+                        {
+                            name: currentLang === 'zh' ? '成交金額' : 'Amount',
+                            type: 'line',
+                            data: amounts,
+                            yAxisIndex: 1,
+                            smooth: true,
+                            lineStyle: { color: '#ffa07a', width: 3 },
+                            itemStyle: { color: '#ffa07a' },
+                            showSymbol: false
+                        }
+                    ]
+                };
+
+                klineChart.setOption(option);
+                window.addEventListener('resize', () => {
+                    if (klineChart) klineChart.resize();
+                });
+            } catch (e) {
+                console.error('Render volume chart error:', e);
+            }
+        }
+
+        function calculateMA(data, period) {
+            const result = [];
+            for (let i = 0; i < data.length; i++) {
+                if (i < period - 1) {
+                    result.push(null);
+                } else {
+                    let sum = 0;
+                    for (let j = 0; j < period; j++) {
+                        sum += data[i - j];
+                    }
+                    result.push(sum / period);
+                }
+            }
+            return result;
+        }
+
+        function renderMAChart(historyData) {
+            try {
+                const raw = historyData.data;
+                const rows = raw.slice(-60);
+                const dates = rows.map(r => normalizeDate(r[0]));
+                const closes = rows.map(r => parseNumber(r[6])); // 收盤價
+                
+                // 計算移動平均線
+                const ma5 = calculateMA(closes, 5);
+                const ma10 = calculateMA(closes, 10);
+                const ma20 = calculateMA(closes, 20);
+                const ma60 = calculateMA(closes, 60);
+
+                const el = document.getElementById('kline');
+                if (!el) return;
+                if (klineChart) {
+                    klineChart.dispose();
+                }
+                klineChart = echarts.init(el);
+
+                const option = {
+                    animation: true,
+                    backgroundColor: '#1a1a2e',
+                    title: { 
+                        text: currentLang === 'zh' ? '移動平均線 (MA)' : 'Moving Average (MA)', 
+                        left: 'center',
+                        top: 10,
+                        textStyle: { fontSize: 16, color: '#e0e0e0', fontWeight: 'bold' } 
+                    },
+                    grid: { left: 50, right: 30, top: 90, bottom: 70 },
+                    tooltip: {
+                        trigger: 'axis',
+                        axisPointer: { 
+                            type: 'cross',
+                            crossStyle: { color: '#5a7fc7' }
+                        },
+                        backgroundColor: 'rgba(50, 50, 70, 0.95)',
+                        borderColor: '#5a7fc7',
+                        borderWidth: 1,
+                        textStyle: { color: '#e0e0e0' },
+                        valueFormatter: (v) => (v == null ? '-' : Number(v).toFixed(2))
+                    },
+                    legend: {
+                        data: currentLang === 'zh' ? ['收盤價', 'MA5', 'MA10', 'MA20', 'MA60'] : ['Close', 'MA5', 'MA10', 'MA20', 'MA60'],
+                        top: 45,
+                        textStyle: { color: '#c0c0c0', fontSize: 12 },
+                        itemWidth: 25,
+                        itemHeight: 12
+                    },
+                    xAxis: {
+                        type: 'category',
+                        data: dates,
+                        boundaryGap: false,
+                        axisLine: { lineStyle: { color: '#5a7fc7' } },
+                        axisLabel: { 
+                            color: '#c0c0c0',
+                            rotate: 45,
+                            fontSize: 10
+                        }
+                    },
+                    yAxis: {
+                        type: 'value',
+                        scale: true,
+                        axisLine: { lineStyle: { color: '#5a7fc7' } },
+                        axisLabel: { 
+                            color: '#c0c0c0',
+                            formatter: (v) => Number(v).toFixed(1)
+                        },
+                        splitLine: { lineStyle: { color: 'rgba(90, 127, 199, 0.15)' } }
+                    },
+                    dataZoom: [
+                        { type: 'inside', start: 40, end: 100 },
+                        { start: 40, end: 100 }
+                    ],
+                    series: [
+                        {
+                            name: currentLang === 'zh' ? '收盤價' : 'Close',
+                            type: 'line',
+                            data: closes,
+                            lineStyle: { color: '#ffffff', width: 2 },
+                            itemStyle: { color: '#ffffff' },
+                            showSymbol: false,
+                            z: 10
+                        },
+                        {
+                            name: 'MA5',
+                            type: 'line',
+                            data: ma5,
+                            smooth: true,
+                            lineStyle: { color: '#ff6b9d', width: 2 },
+                            itemStyle: { color: '#ff6b9d' },
+                            showSymbol: false
+                        },
+                        {
+                            name: 'MA10',
+                            type: 'line',
+                            data: ma10,
+                            smooth: true,
+                            lineStyle: { color: '#4ecdc4', width: 2 },
+                            itemStyle: { color: '#4ecdc4' },
+                            showSymbol: false
+                        },
+                        {
+                            name: 'MA20',
+                            type: 'line',
+                            data: ma20,
+                            smooth: true,
+                            lineStyle: { color: '#ffe66d', width: 2 },
+                            itemStyle: { color: '#ffe66d' },
+                            showSymbol: false
+                        },
+                        {
+                            name: 'MA60',
+                            type: 'line',
+                            data: ma60,
+                            smooth: true,
+                            lineStyle: { color: '#a29bfe', width: 2 },
+                            itemStyle: { color: '#a29bfe' },
+                            showSymbol: false
+                        }
+                    ]
+                };
+
+                klineChart.setOption(option);
+                window.addEventListener('resize', () => {
+                    if (klineChart) klineChart.resize();
+                });
+            } catch (e) {
+                console.error('Render MA chart error:', e);
             }
         }
 
