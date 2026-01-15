@@ -1,0 +1,17 @@
+version: '3.8'
+
+services:
+  pecunianexus:
+    build: .
+    container_name: pecunianexus
+    ports:
+      - "5788:5788"
+    environment:
+      - FLASK_ENV=development
+    restart: unless-stopped
+    volumes:
+      - .:/app
+      - stock-data:/app/data
+
+volumes:
+  stock-data:

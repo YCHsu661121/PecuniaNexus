@@ -1,0 +1,810 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>台股即時查詢系統</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Microsoft JhengHei', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .search-box {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            margin-bottom: 30px;
+        }
+
+        .search-form {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .search-input {
+            flex: 1;
+            padding: 15px;
+            font-size: 16px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            outline: none;
+            transition: border-color 0.3s;
+        }
+
+        .search-input:focus {
+            border-color: #667eea;
+        }
+
+        .search-btn {
+            padding: 15px 30px;
+            font-size: 16px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        .search-btn:hover {
+            transform: translateY(-2px);
+        }
+
+        .popular-stocks {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .stock-tag {
+            padding: 8px 15px;
+            background: #f0f0f0;
+            border-radius: 20px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 14px;
+        }
+
+        .stock-tag:hover {
+            background: #667eea;
+            color: white;
+            transform: scale(1.05);
+        }
+
+        .result-box {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            display: none;
+        }
+
+        .result-box.show {
+            display: block;
+            animation: fadeIn 0.5s;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .stock-info {
+            margin-bottom: 30px;
+        }
+
+        .stock-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid #eee;
+        }
+
+        .stock-title {
+            font-size: 1.8em;
+            color: #333;
+        }
+
+        .stock-code {
+            color: #666;
+            font-size: 0.8em;
+        }
+
+        .price-info {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .price-card {
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            border-left: 4px solid #667eea;
+        }
+
+        .price-label {
+            color: #666;
+            font-size: 0.9em;
+            margin-bottom: 5px;
+        }
+
+        .price-value {
+            font-size: 1.5em;
+            font-weight: bold;
+            color: #333;
+        }
+
+        .price-value.up {
+            color: #e74c3c;
+        }
+
+        .price-value.down {
+            color: #27ae60;
+        }
+
+        .history-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+
+        .history-table th,
+        .history-table td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+
+        .history-table th {
+            background: #667eea;
+            color: white;
+            font-weight: bold;
+        }
+
+        .history-table tr:hover {
+            background: #f5f5f5;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #666;
+        }
+
+        .error {
+            padding: 20px;
+            background: #fee;
+            border-left: 4px solid #e74c3c;
+            border-radius: 5px;
+            color: #c33;
+        }
+
+        .update-time {
+            text-align: right;
+            color: #999;
+            font-size: 0.9em;
+            margin-top: 20px;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            border-bottom: 2px solid #ddd;
+        }
+
+        .tab {
+            padding: 12px 24px;
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 16px;
+            color: #666;
+            border-bottom: 3px solid transparent;
+            transition: all 0.3s;
+        }
+
+        .tab:hover {
+            color: #667eea;
+        }
+
+        .tab.active {
+            color: #667eea;
+            border-bottom-colo show">
+            <div class="tabs">
+                <button class="tab active" onclick="switchTab('search')">📊 查詢股票</button>
+                <button class="tab" onclick="switchTab('watchlist')">⭐ 關注清單</button>
+                <button class="tab" onclick="switchTab('history')">🕐 查詢歷史</button>
+            </div>
+
+            <div id="searchTab" class="tab-content active">
+                <div id="resultContent"></div>
+            </div>
+
+            <div id="watchlistTab" class="tab-content">
+                <div class="add-form">
+                    <h3 style="margin-bottom: 15px;">➕ 添加股票到關注清單</h3>
+                    <div class="form-group">
+                        <label class="form-label">股票代碼</label>
+                        <input type="text" class="form-input" id="addStockCode" placeholder="例如：2330">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">產業分類</label>
+                        <select class="form-select" id="addCategory">
+                            <option value="">請選擇分類</option>
+                        </select>
+                    </div>
+                    <button class="btn btn-primary" onclick="addToWatchlist()">添加到關注清單</button>
+                </div>
+
+                <div class="category-filter" id="categoryFilter">
+                    <button class="category-btn active" onclick="filterWatchlist('')">全部</button>
+                </div>
+
+                <div class="watchlist-grid" id="watchlistGrid"></div>
+            </div>
+
+            <div id="historyTab" class="tab-content">
+                <h3 style="margin-bottom: 15px;">最近查詢記錄</h3>
+                <div class="history-list" id="historyList"></div>
+            
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .add-form {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 5px;
+            color: #333;
+            font-weight: bold;
+        }
+
+        .form-input, .form-select {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #ddd;
+            border-radius: 5px;
+            font-size: 14px;
+            outline: none;
+        }
+
+        .form-input:focus, .form-select:focus {
+            border-color: #667eea;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.3s;
+        }
+
+        .btn-primary {
+            background: #667eea;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #5568d3;
+        }
+
+        .btn-danger {
+            background: #e74c3c;
+            color: white;
+            padding: 5px 10px;
+            font-size: 12px;
+        }
+
+        .btn-danger:hover {
+            background: #c0392b;
+        }
+
+        .watchlist-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .watchlist-card {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 10px;
+            border-left: 4px solid #667eea;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .watchlist-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+
+        .watchlist-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: start;
+            margin-bottom: 10px;
+        }
+
+        .watchlist-code {
+            font-size: 1.2em;
+            font-weight: bold;
+            color: #333;
+        }
+
+        .watchlist-name {
+            color: #666;
+            font-size: 0.9em;
+        }
+
+        .watchlist-category {
+            display: inline-block;
+            padding: 3px 10px;
+            background: #667eea;
+            color: white;
+            border-radius: 12px;
+            font-size: 0.8em;
+            margin-top: 5px;
+        }
+
+        .history-list {
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .history-item {
+            padding: 12px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .history-item:hover {
+            background: #e9ecef;
+            transform: translateX(5px);
+        }
+
+        .history-info {
+            flex: 1;
+        }
+
+        .history-time {
+            color: #999;
+            font-size: 0.85em;
+        }
+
+        .category-filter {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .category-btn {
+            padding: 8px 16px;
+            background: #f0f0f0;
+            border: 2px solid transparent;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.3s;
+        }
+
+        .category-btn:hover {
+            background: #e0e0e0;
+        }
+
+        let currentCategory = '';
+
+        // 初始化頁面
+        document.addEventListener('DOMContentLoaded', function() {
+            loadCategories();
+            loadWatchlist();
+            loadHistory();
+        });
+
+        function switchTab(tab) {
+            // 更新 tab 樣式
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+            
+            event.target.classList.add('active');
+            document.getElementById(tab + 'Tab').classList.add('active');
+
+            // 載入對應資料
+            if (tab === 'watchlist') {
+                loadWatchlist();
+            } else if (tab === 'history') {
+                loadHistory();
+            }
+        }
+
+        async function loadCategories() {
+            try {
+                const response = await fetch('/api/categories');
+                const data = await response.json();
+                
+                if (data.success) {
+                    const select = document.getElementById('addCategory');
+                    const filter = document.getElementById('categoryFilter');
+                    
+                    data.data.forEach(cat => {
+                        // 添加到選擇框
+                        const option = document.createElement('option');
+                        option.value = cat;
+                        option.textContent = cat;
+                        select.appendChild(option);
+                        
+                        // 添加到過濾按鈕
+                        const btn = document.createElement('button');
+                        btn.className = 'category-btn';
+                        btn.textContent = cat;
+                        btn.onclick = () => filterWatchlist(cat);
+                        filter.appendChild(btn);
+                    });
+            // 切換到查詢頁籤
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+            document.querySelectorAll('.tab')[0].classList.add('active');
+            document.getElementById('searchTab').classList.add('active');
+
+            const resultContent = document.getElementById('resultContent');
+            resultContent.innerHTML = '<div class="loading">🔄 載入中...</div>';
+
+            try {
+                // 獲取即時資訊
+                const infoResponse = await fetch(`/api/stock/${stockCode}`);
+                const infoData = await infoResponse.json();
+
+                if (!infoData.success) {
+                    resultContent.innerHTML = `<div class="error">${infoData.message}</div>`;
+                    return;
+                }
+
+                // 儲存查詢歷史
+                saveSearchHistory(stockCode, infoData.stock_name);f (data.success && data.data.length > 0) {
+                    grid.innerHTML = data.data.map(item => `
+                        <div class="watchlist-card" onclick="searchStockById('${item.stock_code}')">
+                            <div class="watchlist-header">
+                                <div>
+                                    <div class="watchlist-code">${item.stock_code}</div>
+                                    <div class="watchlist-name">${item.stock_name || '載入中...'}</div>
+                                    <span class="watchlist-category">${item.category}</span>
+                                </div>
+                                <button class="btn btn-danger" onclick="event.stopPropagation(); deleteFromWatchlist(${item.id})">刪除</button>
+                            </div>
+                        </div>
+                    `).join('');
+                } else {
+                    grid.innerHTML = '<p style="text-align: center; color: #999; padding: 40px;">尚無關注股票</p>';
+                }
+            } catch (error) {
+                console.error('載入關注清單失敗:', error);
+            }
+        }
+
+        function filterWatchlist(category) {
+            currentCategory = category;
+            
+            // 更新按鈕樣式
+            document.querySelectorAll('.category-btn').forEach(btn => {
+                btn.classList.remove('active');
+                if ((category === '' && btn.textContent === '全部') || btn.textContent === category) {
+                    btn.classList.add('active');
+                }
+            });
+            
+            loadWatchlist(category);
+        }
+
+        async function addToWatchlist() {
+            const stockCode = document.getElementById('addStockCode').value.trim();
+            const category = document.getElementById('addCategory').value;
+            
+            if (!stockCode) {
+                alert('請輸入股票代碼');
+                return;
+            }
+            
+            if (!category) {
+                alert('請選擇產業分類');
+                return;
+            }
+            
+            try {
+                const response = await fetch('/api/watchlist', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ stock_code: stockCode, category: category })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    alert('添加成功！');
+                    document.getElementById('addStockCode').value = '';
+                    document.getElementById('addCategory').value = '';
+                    loadWatchlist(currentCategory);
+                } else {
+                    alert(data.message || '添加失敗');
+                }
+            } catch (error) {
+                alert('添加失敗: ' + error.message);
+            }
+        }
+
+        async function deleteFromWatchlist(id) {
+            if (!confirm('確定要從關注清單中移除此股票嗎？')) {
+                return;
+            }
+            
+            try {
+                const response = await fetch(`/api/watchlist/${id}`, {
+                    method: 'DELETE'
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    loadWatchlist(currentCategory);
+                } else {
+                    alert(data.message || '刪除失敗');
+                }
+            } catch (error) {
+                alert('刪除失敗: ' + error.message);
+            }
+        }
+
+        async function loadHistory() {
+            try {
+                const response = await fetch('/api/history');
+                const data = await response.json();
+                
+                const list = document.getElementById('historyList');
+                
+                if (data.success && data.data.length > 0) {
+                    list.innerHTML = data.data.map(item => `
+                        <div class="history-item" onclick="searchStockById('${item.stock_code}')">
+                            <div class="history-info">
+                                <div><strong>${item.stock_code}</strong> ${item.stock_name || ''}</div>
+                                <div class="history-time">${new Date(item.search_time).toLocaleString('zh-TW')}</div>
+                            </div>
+                            <span>→</span>
+                        </div>
+                    `).join('');
+                } else {
+                    list.innerHTML = '<p style="text-align: center; color: #999; padding: 40px;">尚無查詢記錄</p>';
+                }
+            } catch (error) {
+                console.error('載入歷史記錄失敗:', error);
+            }
+        }
+
+        async function saveSearchHistory(stockCode, stockName) {
+            try {
+                await fetch('/api/history', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ stock_code: stockCode, stock_name: stockName })
+                });
+            } catch (error) {
+                console.error('儲存歷史記錄失敗:', error);
+            }
+        }
+
+        function searchStockById(stockCode) {
+            document.getElementById('stockInput').value = stockCode;
+            switchTab('search');
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.tab')[0].classList.add('active');
+            searchStock();
+        }
+
+        .category-btn.active {
+            background: #667eea;
+            color: white;
+            border-color: #667eea;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📈 台股即時查詢系統</h1>
+            <p>輸入股票代碼查詢即時資訊與歷史資料</p>
+        </div>
+
+        <div class="search-box">
+            <div class="search-form">
+                <input type="text" class="search-input" id="stockInput" placeholder="請輸入股票代碼（例如：2330）">
+                <button class="search-btn" onclick="searchStock()">查詢</button>
+            </div>
+            <div class="popular-stocks">
+                <span style="color: #666; margin-right: 10px;">熱門股票：</span>
+                <div class="stock-tag" onclick="quickSearch('2330')">2330 台積電</div>
+                <div class="stock-tag" onclick="quickSearch('2317')">2317 鴻海</div>
+                <div class="stock-tag" onclick="quickSearch('2454')">2454 聯發科</div>
+                <div class="stock-tag" onclick="quickSearch('2412')">2412 中華電</div>
+                <div class="stock-tag" onclick="quickSearch('2882')">2882 國泰金</div>
+                <div class="stock-tag" onclick="quickSearch('2303')">2303 聯電</div>
+            </div>
+        </div>
+
+        <div class="result-box" id="resultBox">
+            <div id="resultContent"></div>
+        </div>
+    </div>
+
+    <script>
+        function quickSearch(stockCode) {
+            document.getElementById('stockInput').value = stockCode;
+            searchStock();
+        }
+
+        async function searchStock() {
+            const stockCode = document.getElementById('stockInput').value.trim();
+            if (!stockCode) {
+                alert('請輸入股票代碼');
+                return;
+            }
+
+            const resultBox = document.getElementById('resultBox');
+            const resultContent = document.getElementById('resultContent');
+            
+            resultBox.classList.add('show');
+            resultContent.innerHTML = '<div class="loading">🔄 載入中...</div>';
+
+            try {
+                // 獲取即時資訊
+                const infoResponse = await fetch(`/api/stock/${stockCode}`);
+                const infoData = await infoResponse.json();
+
+                if (!infoData.success) {
+                    resultContent.innerHTML = `<div class="error">${infoData.message}</div>`;
+                    return;
+                }
+
+                // 獲取歷史資料
+                const historyResponse = await fetch(`/api/stock/history/${stockCode}`);
+                const historyData = await historyResponse.json();
+
+                displayResult(infoData, historyData);
+            } catch (error) {
+                resultContent.innerHTML = `<div class="error">發生錯誤: ${error.message}</div>`;
+            }
+        }
+
+        function displayResult(infoData, historyData) {
+            let html = '<div class="stock-info">';
+            
+            // 股票標題
+            html += `
+                <div class="stock-header">
+                    <div>
+                        <div class="stock-title">${infoData.stock_name}</div>
+                        <div class="stock-code">股票代碼: ${infoData.stock_code}</div>
+                    </div>
+                </div>
+            `;
+
+            // 價格資訊
+            const priceChangeClass = parseFloat(infoData.current_price) >= parseFloat(infoData.change) ? 'up' : 'down';
+            html += `
+                <div class="price-info">
+                    <div class="price-card">
+                        <div class="price-label">目前價格</div>
+                        <div class="price-value ${priceChangeClass}">${infoData.current_price}</div>
+                    </div>
+                    <div class="price-card">
+                        <div class="price-label">開盤價</div>
+                        <div class="price-value">${infoData.open}</div>
+                    </div>
+                    <div class="price-card">
+                        <div class="price-label">最高價</div>
+                        <div class="price-value">${infoData.high}</div>
+                    </div>
+                    <div class="price-card">
+                        <div class="price-label">最低價</div>
+                        <div class="price-value">${infoData.low}</div>
+                    </div>
+                    <div class="price-card">
+                        <div class="price-label">成交量</div>
+                        <div class="price-value">${infoData.volume}</div>
+                    </div>
+                </div>
+            `;
+
+            // 歷史資料表格
+            if (historyData.success && historyData.data && historyData.data.length > 0) {
+                html += '<h3>本月歷史資料</h3>';
+                html += '<table class="history-table"><thead><tr>';
+                
+                historyData.fields.forEach(field => {
+                    html += `<th>${field}</th>`;
+                });
+                html += '</tr></thead><tbody>';
+
+                // 只顯示最近10筆資料
+                const recentData = historyData.data.slice(-10).reverse();
+                recentData.forEach(row => {
+                    html += '<tr>';
+                    row.forEach(cell => {
+                        html += `<td>${cell}</td>`;
+                    });
+                    html += '</tr>';
+                });
+                html += '</tbody></table>';
+            }
+
+            html += `<div class="update-time">更新時間: ${infoData.time || new Date().toLocaleString('zh-TW')}</div>`;
+            html += '</div>';
+
+            document.getElementById('resultContent').innerHTML = html;
+        }
+
+        // Enter 鍵搜尋
+        document.getElementById('stockInput').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                searchStock();
+            }
+        });
+    </script>
+</body>
+</html>

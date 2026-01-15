@@ -1,0 +1,52 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.so
+
+# Virtual environments
+.env
+.venv/
+venv/
+ENV/
+
+# VS Code
+.vscode/
+
+# Byte-compiled / optimized / DLL files
+*$py.class
+
+# SQLite databases
+*.sqlite3
+*.db
+
+# Logs
+*.log
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Flask instance / cache
+instance/
+.cache/
+
+# Build artifacts
+build/
+dist/
+*.egg-info/
+
+# Coverage / test
+.coverage
+htmlcov/
+.pytest_cache/
+
+# Node (if any tooling)
+node_modules/
+
+# Docker
+*.tar
+
+# Project data
+/data/
