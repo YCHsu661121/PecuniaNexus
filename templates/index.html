@@ -1126,10 +1126,10 @@
             <div id="resultContent"></div>
             <div id="chartAndNewsContainer" style="display:none;">
                 <div class="chart-controls" id="chartControls">
-                    <button class="chart-btn active" onclick="switchChart('kline')">📊 K線圖</button>
-                    <button class="chart-btn" onclick="switchChart('line')">📈 高低曲線</button>
+                    <button class="chart-btn active" onclick="switchChart('kline')">📊 K線+MA</button>
+                    <button class="chart-btn" onclick="switchChart('line')">📈 布林通道</button>
                     <button class="chart-btn" onclick="switchChart('volume')">📦 成交量</button>
-                    <button class="chart-btn" onclick="switchChart('ma')">📉 移動平均</button>
+                    <button class="chart-btn" onclick="switchChart('ma')">📉 RSI+MACD</button>
                 </div>
                 <div class="content-grid" id="contentGrid">
                     <div>
@@ -1448,11 +1448,11 @@
                     return;
                 }
 
-                // 獲取歷史資料
-                const historyResponse = await fetch(`/api/stock/history/${stockCode}`);
-                const historyData = await historyResponse.json();
+                // 使用 TA-Lib 計算的技術指標數據
+                const indicatorsResponse = await fetch(`/api/stock/indicators/${stockCode}`);
+                const indicatorsData = await indicatorsResponse.json();
 
-                displayResult(infoData, historyData);
+                displayResult(infoData, indicatorsData);
                 
                 // 顯示自動更新控制
                 document.getElementById('autoRefreshControl').style.display = 'flex';
@@ -1536,19 +1536,19 @@
             if (historyData.success && historyData.data && historyData.data.length > 0) {
                 html += '<h3>本月歷史資料</h3>';
                 html += '<table class="history-table"><thead><tr>';
-                
-                historyData.fields.forEach(field => {
-                    html += `<th>${field}</th>`;
-                });
+                html += '<th>日期</th><th>開盤</th><th>最高</th><th>最低</th><th>收盤</th><th>成交量</th>';
                 html += '</tr></thead><tbody>';
 
                 // 只顯示最近10筆資料
                 const recentData = historyData.data.slice(-10).reverse();
                 recentData.forEach(row => {
                     html += '<tr>';
-                    row.forEach(cell => {
-                        html += `<td>${cell}</td>`;
-                    });
+                    html += `<td>${row.date}</td>`;
+                    html += `<td>${row.open.toFixed(2)}</td>`;
+                    html += `<td>${row.high.toFixed(2)}</td>`;
+                    html += `<td>${row.low.toFixed(2)}</td>`;
+                    html += `<td>${row.close.toFixed(2)}</td>`;
+                    html += `<td>${(row.volume / 1000).toFixed(0)}K</td>`;
                     html += '</tr>';
                 });
                 html += '</tbody></table>';
@@ -1691,16 +1691,27 @@
 
         function renderKline(historyData) {
             try {
-                const raw = historyData.data; // 每列: [日期, 成交股數, 成交金額, 開盤價, 最高價, 最低價, 收盤價, 漲跌價差, 成交筆數]
-                // 取最近 60 筆（若不足則全取），並依時間先後排序
-                const rows = raw.slice(-60);
-                const dates = rows.map(r => normalizeDate(r[0]));
+                if (!historyData.success || !historyData.data) {
+                    console.error('Invalid history data');
+                    return;
+                }
+                
+                const data = historyData.data;
+                // TA-Lib 格式：每筆包含 date, open, high, low, close, volume, ma5, ma10, ma20, ma60 等
+                const rows = data.slice(-60);  // 取最近 60 筆
+                const dates = rows.map(r => normalizeDate(r.date));
                 const ohlc = rows.map(r => [
-                    parseNumber(r[3]), // 開
-                    parseNumber(r[6]), // 收
-                    parseNumber(r[4]), // 高
-                    parseNumber(r[5])  // 低
+                    parseNumber(r.open),  // 開
+                    parseNumber(r.close), // 收
+                    parseNumber(r.high),  // 高
+                    parseNumber(r.low)    // 低
                 ]);
+                
+                // 提取 MA 數據
+                const ma5Data = rows.map(r => r.ma5);
+                const ma10Data = rows.map(r => r.ma10);
+                const ma20Data = rows.map(r => r.ma20);
+                const ma60Data = rows.map(r => r.ma60);
 
                 const el = document.getElementById('kline');
                 if (!el) return;
@@ -1712,7 +1723,18 @@
                 const option = {
                     animation: true,
                     backgroundColor: '#1a1a2e',
-                    grid: { left: 50, right: 20, top: 40, bottom: 70 },
+                    title: { 
+                        text: 'K線圖 + 移動平均線 (TA-Lib)', 
+                        left: 'center',
+                        top: 10,
+                        textStyle: { fontSize: 16, color: '#e0e0e0', fontWeight: 'bold' } 
+                    },
+                    legend: {
+                        data: ['K線', 'MA5', 'MA10', 'MA20', 'MA60'],
+                        top: 40,
+                        textStyle: { color: '#c0c0c0' }
+                    },
+                    grid: { left: 50, right: 20, top: 90, bottom: 70 },
                     tooltip: {
                         trigger: 'axis',
                         axisPointer: { type: 'cross' },
@@ -1757,6 +1779,38 @@
                                 borderColor: '#e74c3c',
                                 borderColor0: '#27ae60'
                             }
+                        },
+                        {
+                            name: 'MA5',
+                            type: 'line',
+                            data: ma5Data,
+                            smooth: true,
+                            lineStyle: { color: '#FF6B6B', width: 1.5 },
+                            showSymbol: false
+                        },
+                        {
+                            name: 'MA10',
+                            type: 'line',
+                            data: ma10Data,
+                            smooth: true,
+                            lineStyle: { color: '#4ECDC4', width: 1.5 },
+                            showSymbol: false
+                        },
+                        {
+                            name: 'MA20',
+                            type: 'line',
+                            data: ma20Data,
+                            smooth: true,
+                            lineStyle: { color: '#FFD93D', width: 1.5 },
+                            showSymbol: false
+                        },
+                        {
+                            name: 'MA60',
+                            type: 'line',
+                            data: ma60Data,
+                            smooth: true,
+                            lineStyle: { color: '#95E1D3', width: 1.5 },
+                            showSymbol: false
                         }
                     ]
                 };
@@ -1772,12 +1826,17 @@
 
         function renderLineChart(historyData) {
             try {
-                const raw = historyData.data;
-                const rows = raw.slice(-60);
-                const dates = rows.map(r => normalizeDate(r[0]));
-                const highs = rows.map(r => parseNumber(r[4])); // 最高價
-                const lows = rows.map(r => parseNumber(r[5]));  // 最低價
-                const closes = rows.map(r => parseNumber(r[6])); // 收盤價
+                if (!historyData.success || !historyData.data) return;
+                
+                const data = historyData.data;
+                const rows = data.slice(-60);
+                const dates = rows.map(r => normalizeDate(r.date));
+                const highs = rows.map(r => parseNumber(r.high));
+                const lows = rows.map(r => parseNumber(r.low));
+                const closes = rows.map(r => parseNumber(r.close));
+                const bollUpper = rows.map(r => r.boll_upper);
+                const bollMiddle = rows.map(r => r.boll_middle);
+                const bollLower = rows.map(r => r.boll_lower);
 
                 const el = document.getElementById('kline');
                 if (!el) return;
@@ -1790,7 +1849,7 @@
                     animation: true,
                     backgroundColor: '#1a1a2e',
                     title: { 
-                        text: currentLang === 'zh' ? '歷史高低曲線' : 'Historical High-Low Line', 
+                        text: '價格曲線 + 布林通道 (TA-Lib)', 
                         left: 'center',
                         top: 10,
                         textStyle: { fontSize: 16, color: '#e0e0e0', fontWeight: 'bold' } 
@@ -1809,11 +1868,11 @@
                         valueFormatter: (v) => (v == null ? '-' : Number(v).toFixed(2))
                     },
                     legend: {
-                        data: currentLang === 'zh' ? ['最高價', '最低價', '收盤價'] : ['High', 'Low', 'Close'],
+                        data: ['最高價', '最低價', '收盤價', 'BOLL上軌', 'BOLL中軌', 'BOLL下軌'],
                         top: 45,
-                        textStyle: { color: '#c0c0c0', fontSize: 13 },
-                        itemWidth: 30,
-                        itemHeight: 14
+                        textStyle: { color: '#c0c0c0', fontSize: 11 },
+                        itemWidth: 25,
+                        itemHeight: 12
                     },
                     xAxis: {
                         type: 'category',
@@ -1861,42 +1920,44 @@
                             }
                         },
                         {
-                            name: currentLang === 'zh' ? '最低價' : 'Low',
+                            name: '最低價',
                             type: 'line',
                             data: lows,
                             smooth: true,
-                            lineStyle: { color: '#4ecdc4', width: 3 },
-                            itemStyle: { color: '#4ecdc4' },
-                            showSymbol: false,
-                            areaStyle: {
-                                color: {
-                                    type: 'linear',
-                                    x: 0, y: 0, x2: 0, y2: 1,
-                                    colorStops: [
-                                        { offset: 0, color: 'rgba(78, 205, 196, 0.3)' },
-                                        { offset: 1, color: 'rgba(78, 205, 196, 0.05)' }
-                                    ]
-                                }
-                            }
+                            lineStyle: { color: '#4ecdc4', width: 2 },
+                            showSymbol: false
                         },
                         {
-                            name: currentLang === 'zh' ? '收盤價' : 'Close',
+                            name: '收盤價',
                             type: 'line',
                             data: closes,
                             smooth: true,
-                            lineStyle: { color: '#ffe66d', width: 3 },
-                            itemStyle: { color: '#ffe66d' },
-                            showSymbol: false,
-                            areaStyle: {
-                                color: {
-                                    type: 'linear',
-                                    x: 0, y: 0, x2: 0, y2: 1,
-                                    colorStops: [
-                                        { offset: 0, color: 'rgba(255, 230, 109, 0.3)' },
-                                        { offset: 1, color: 'rgba(255, 230, 109, 0.05)' }
-                                    ]
-                                }
-                            }
+                            lineStyle: { color: '#ffe66d', width: 2 },
+                            showSymbol: false
+                        },
+                        {
+                            name: 'BOLL上軌',
+                            type: 'line',
+                            data: bollUpper,
+                            smooth: true,
+                            lineStyle: { color: '#ff6b9d', width: 1, type: 'dashed' },
+                            showSymbol: false
+                        },
+                        {
+                            name: 'BOLL中軌',
+                            type: 'line',
+                            data: bollMiddle,
+                            smooth: true,
+                            lineStyle: { color: '#a8dadc', width: 1.5 },
+                            showSymbol: false
+                        },
+                        {
+                            name: 'BOLL下軌',
+                            type: 'line',
+                            data: bollLower,
+                            smooth: true,
+                            lineStyle: { color: '#ff6b9d', width: 1, type: 'dashed' },
+                            showSymbol: false
                         }
                     ]
                 };
@@ -1912,11 +1973,14 @@
 
         function renderVolumeChart(historyData) {
             try {
-                const raw = historyData.data;
-                const rows = raw.slice(-60);
-                const dates = rows.map(r => normalizeDate(r[0]));
-                const volumes = rows.map(r => parseNumber(r[1])); // 成交股數
-                const amounts = rows.map(r => parseNumber(r[2])); // 成交金額
+                if (!historyData.success || !historyData.data) return;
+                
+                const data = historyData.data;
+                const rows = data.slice(-60);
+                const dates = rows.map(r => normalizeDate(r.date));
+                const volumes = rows.map(r => parseNumber(r.volume));
+                const volumeMa5 = rows.map(r => r.volume_ma5);
+                const volumeMa10 = rows.map(r => r.volume_ma10);
 
                 const el = document.getElementById('kline');
                 if (!el) return;
@@ -1929,12 +1993,12 @@
                     animation: true,
                     backgroundColor: '#1a1a2e',
                     title: { 
-                        text: currentLang === 'zh' ? '成交量與成交金額' : 'Trading Volume & Amount', 
+                        text: '成交量分析 (TA-Lib)', 
                         left: 'center',
                         top: 10,
                         textStyle: { fontSize: 16, color: '#e0e0e0', fontWeight: 'bold' } 
                     },
-                    grid: { left: 60, right: 60, top: 90, bottom: 70 },
+                    grid: { left: 60, right: 30, top: 90, bottom: 70 },
                     tooltip: {
                         trigger: 'axis',
                         axisPointer: { type: 'shadow' },
@@ -1952,7 +2016,7 @@
                         }
                     },
                     legend: {
-                        data: currentLang === 'zh' ? ['成交股數', '成交金額'] : ['Volume', 'Amount'],
+                        data: ['成交量', 'VOL MA5', 'VOL MA10'],
                         top: 45,
                         textStyle: { color: '#c0c0c0', fontSize: 13 }
                     },
@@ -1966,28 +2030,17 @@
                             fontSize: 10
                         }
                     },
-                    yAxis: [
-                        {
-                            type: 'value',
-                            name: currentLang === 'zh' ? '成交股數' : 'Volume',
-                            position: 'left',
-                            axisLine: { lineStyle: { color: '#5a7fc7' } },
-                            axisLabel: { 
-                                color: '#c0c0c0',
-                                formatter: (v) => (v / 1000).toFixed(0) + 'K'
-                            },
-                            splitLine: { lineStyle: { color: 'rgba(90, 127, 199, 0.15)' } },
-                            nameTextStyle: { color: '#c0c0c0' }
+                    yAxis: {
+                        type: 'value',
+                        name: '成交量',
+                        axisLine: { lineStyle: { color: '#5a7fc7' } },
+                        axisLabel: { 
+                            color: '#c0c0c0',
+                            formatter: (v) => (v / 1000).toFixed(0) + 'K'
                         },
-                        {
-                            type: 'value',
-                            name: currentLang === 'zh' ? '成交金額' : 'Amount',
-                            position: 'right',
-                            axisLine: { lineStyle: { color: '#5a7fc7' } },
-                            axisLabel: { 
-                                color: '#c0c0c0',
-                                formatter: (v) => (v / 1000000).toFixed(0) + 'M'
-                            },
+                        splitLine: { lineStyle: { color: 'rgba(90, 127, 199, 0.15)' } },
+                        nameTextStyle: { color: '#c0c0c0' }
+                    },                            },
                             splitLine: { show: false },
                             nameTextStyle: { color: '#c0c0c0' }
                         }
@@ -2014,14 +2067,35 @@
                             },
                             barMaxWidth: 20
                         },
+                    dataZoom: [
+                        { type: 'inside', start: 40, end: 100 },
+                        { start: 40, end: 100 }
+                    ],
+                    series: [
                         {
-                            name: currentLang === 'zh' ? '成交金額' : 'Amount',
+                            name: '成交量',
+                            type: 'bar',
+                            data: volumes,
+                            itemStyle: { 
+                                color: '#5a7fc7',
+                                borderRadius: [4, 4, 0, 0]
+                            },
+                            barMaxWidth: 20
+                        },
+                        {
+                            name: 'VOL MA5',
                             type: 'line',
-                            data: amounts,
-                            yAxisIndex: 1,
+                            data: volumeMa5,
                             smooth: true,
-                            lineStyle: { color: '#ffa07a', width: 3 },
-                            itemStyle: { color: '#ffa07a' },
+                            lineStyle: { color: '#ff6b9d', width: 2 },
+                            showSymbol: false
+                        },
+                        {
+                            name: 'VOL MA10',
+                            type: 'line',
+                            data: volumeMa10,
+                            smooth: true,
+                            lineStyle: { color: '#4ecdc4', width: 2 },
                             showSymbol: false
                         }
                     ]
@@ -2036,34 +2110,18 @@
             }
         }
 
-        function calculateMA(data, period) {
-            const result = [];
-            for (let i = 0; i < data.length; i++) {
-                if (i < period - 1) {
-                    result.push(null);
-                } else {
-                    let sum = 0;
-                    for (let j = 0; j < period; j++) {
-                        sum += data[i - j];
-                    }
-                    result.push(sum / period);
-                }
-            }
-            return result;
-        }
-
         function renderMAChart(historyData) {
             try {
-                const raw = historyData.data;
-                const rows = raw.slice(-60);
-                const dates = rows.map(r => normalizeDate(r[0]));
-                const closes = rows.map(r => parseNumber(r[6])); // 收盤價
+                if (!historyData.success || !historyData.data) return;
                 
-                // 計算移動平均線
-                const ma5 = calculateMA(closes, 5);
-                const ma10 = calculateMA(closes, 10);
-                const ma20 = calculateMA(closes, 20);
-                const ma60 = calculateMA(closes, 60);
+                const data = historyData.data;
+                const rows = data.slice(-60);
+                const dates = rows.map(r => normalizeDate(r.date));
+                const rsi6 = rows.map(r => r.rsi6);
+                const rsi12 = rows.map(r => r.rsi12);
+                const macd = rows.map(r => r.macd);
+                const macdSignal = rows.map(r => r.macd_signal);
+                const macdHist = rows.map(r => r.macd_hist);
 
                 const el = document.getElementById('kline');
                 if (!el) return;
@@ -2099,77 +2157,118 @@
                         top: 45,
                         textStyle: { color: '#c0c0c0', fontSize: 12 },
                         itemWidth: 25,
+                    title: { 
+                        text: 'RSI + MACD 技術指標 (TA-Lib)', 
+                        left: 'center',
+                        top: 10,
+                        textStyle: { fontSize: 16, color: '#e0e0e0', fontWeight: 'bold' } 
+                    },
+                    legend: {
+                        data: ['RSI6', 'RSI12', 'MACD', 'Signal', 'Histogram'],
+                        top: 45,
+                        textStyle: { color: '#c0c0c0', fontSize: 11 },
+                        itemWidth: 25,
                         itemHeight: 12
                     },
-                    xAxis: {
-                        type: 'category',
-                        data: dates,
-                        boundaryGap: false,
-                        axisLine: { lineStyle: { color: '#5a7fc7' } },
-                        axisLabel: { 
-                            color: '#c0c0c0',
-                            rotate: 45,
-                            fontSize: 10
-                        }
-                    },
-                    yAxis: {
-                        type: 'value',
-                        scale: true,
-                        axisLine: { lineStyle: { color: '#5a7fc7' } },
-                        axisLabel: { 
-                            color: '#c0c0c0',
-                            formatter: (v) => Number(v).toFixed(1)
+                    grid: [
+                        { left: 50, right: 30, top: 90, height: '35%' },
+                        { left: 50, right: 30, top: '55%', height: '35%' }
+                    ],
+                    xAxis: [
+                        {
+                            type: 'category',
+                            data: dates,
+                            gridIndex: 0,
+                            axisLine: { lineStyle: { color: '#5a7fc7' } },
+                            axisLabel: { show: false }
                         },
-                        splitLine: { lineStyle: { color: 'rgba(90, 127, 199, 0.15)' } }
-                    },
+                        {
+                            type: 'category',
+                            data: dates,
+                            gridIndex: 1,
+                            axisLine: { lineStyle: { color: '#5a7fc7' } },
+                            axisLabel: { 
+                                color: '#c0c0c0',
+                                rotate: 45,
+                                fontSize: 10
+                            }
+                        }
+                    ],
+                    yAxis: [
+                        {
+                            type: 'value',
+                            name: 'RSI',
+                            gridIndex: 0,
+                            min: 0,
+                            max: 100,
+                            axisLine: { lineStyle: { color: '#5a7fc7' } },
+                            axisLabel: { color: '#c0c0c0' },
+                            splitLine: { lineStyle: { color: 'rgba(90, 127, 199, 0.15)' } }
+                        },
+                        {
+                            type: 'value',
+                            name: 'MACD',
+                            gridIndex: 1,
+                            axisLine: { lineStyle: { color: '#5a7fc7' } },
+                            axisLabel: { color: '#c0c0c0' },
+                            splitLine: { lineStyle: { color: 'rgba(90, 127, 199, 0.15)' } }
+                        }
+                    ],
                     dataZoom: [
-                        { type: 'inside', start: 40, end: 100 },
-                        { start: 40, end: 100 }
+                        { type: 'inside', xAxisIndex: [0, 1], start: 40, end: 100 },
+                        { xAxisIndex: [0, 1], start: 40, end: 100 }
                     ],
                     series: [
                         {
-                            name: currentLang === 'zh' ? '收盤價' : 'Close',
+                            name: 'RSI6',
                             type: 'line',
-                            data: closes,
-                            lineStyle: { color: '#ffffff', width: 2 },
-                            itemStyle: { color: '#ffffff' },
-                            showSymbol: false,
-                            z: 10
-                        },
-                        {
-                            name: 'MA5',
-                            type: 'line',
-                            data: ma5,
+                            data: rsi6,
+                            xAxisIndex: 0,
+                            yAxisIndex: 0,
                             smooth: true,
                             lineStyle: { color: '#ff6b9d', width: 2 },
-                            itemStyle: { color: '#ff6b9d' },
                             showSymbol: false
                         },
                         {
-                            name: 'MA10',
+                            name: 'RSI12',
                             type: 'line',
-                            data: ma10,
+                            data: rsi12,
+                            xAxisIndex: 0,
+                            yAxisIndex: 0,
                             smooth: true,
                             lineStyle: { color: '#4ecdc4', width: 2 },
-                            itemStyle: { color: '#4ecdc4' },
                             showSymbol: false
                         },
                         {
-                            name: 'MA20',
+                            name: 'MACD',
                             type: 'line',
-                            data: ma20,
+                            data: macd,
+                            xAxisIndex: 1,
+                            yAxisIndex: 1,
                             smooth: true,
                             lineStyle: { color: '#ffe66d', width: 2 },
-                            itemStyle: { color: '#ffe66d' },
                             showSymbol: false
                         },
                         {
-                            name: 'MA60',
+                            name: 'Signal',
                             type: 'line',
-                            data: ma60,
+                            data: macdSignal,
+                            xAxisIndex: 1,
+                            yAxisIndex: 1,
                             smooth: true,
                             lineStyle: { color: '#a29bfe', width: 2 },
-                            itemStyle: { color: '#a29bfe' },
+                            showSymbol: false
+                        },
+                        {
+                            name: 'Histogram',
+                            type: 'bar',
+                            data: macdHist,
+                            xAxisIndex: 1,
+                            yAxisIndex: 1,
+                            itemStyle: { 
+                                color: (params) => params.value >= 0 ? '#e74c3c' : '#27ae60'
+                            },
+                            barMaxWidth: 10
                             showSymbol: false
                         }
                     ]
@@ -2254,10 +2353,10 @@
 
                 if (!infoData.success) return;
 
-                const historyResponse = await fetch(`/api/stock/history/${currentStockCode}`);
-                const historyData = await historyResponse.json();
+                const indicatorsResponse = await fetch(`/api/stock/indicators/${currentStockCode}`);
+                const indicatorsData = await indicatorsResponse.json();
 
-                displayResult(infoData, historyData);
+                displayResult(infoData, indicatorsData);
                 
                 // 重置倍數
                 refreshCountdown = 5;

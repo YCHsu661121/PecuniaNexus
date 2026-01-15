@@ -6,6 +6,13 @@ import sqlite3
 from contextlib import closing
 import os
 import hashlib
+import numpy as np
+try:
+    import talib
+    TALIB_AVAILABLE = True
+except ImportError:
+    TALIB_AVAILABLE = False
+    print("Warning: TA-Lib not installed. Technical indicators will not be available.")
 
 DB_URL = os.environ.get('DATABASE_URL', '').strip()
 DB_IS_PG = DB_URL.startswith('postgres://') or DB_URL.startswith('postgresql://')
@@ -445,6 +452,109 @@ def get_stock_history(stock_code):
     """
     result = get_twse_data(stock_code)
     return jsonify(result)
+
+
+@app.route('/api/stock/indicators/<stock_code>')
+def get_stock_indicators(stock_code):
+    """
+    API 端點：使用 TA-Lib 計算技術指標
+    返回 K 線數據 + MA + RSI + MACD + BOLL 等指標
+    """
+    if not TALIB_AVAILABLE:
+        return jsonify({
+            'success': False,
+            'message': 'TA-Lib not installed'
+        })
+    
+    try:
+        # 獲取原始歷史數據
+        raw_data = get_twse_data(stock_code)
+        if not raw_data.get('success') or not raw_data.get('data'):
+            return jsonify(raw_data)
+        
+        data = raw_data['data']
+        if len(data) < 60:  # 至少需要 60 天數據計算 MA60
+            return jsonify({
+                'success': False,
+                'message': '歷史數據不足 (需要至少 60 天)'
+            })
+        
+        # 提取 OHLCV 數據
+        dates = [row[0] for row in data]
+        opens = np.array([float(row[3]) for row in data], dtype=float)
+        highs = np.array([float(row[4]) for row in data], dtype=float)
+        lows = np.array([float(row[5]) for row in data], dtype=float)
+        closes = np.array([float(row[6]) for row in data], dtype=float)
+        volumes = np.array([float(row[1]) for row in data], dtype=float)
+        
+        # 計算技術指標
+        # 1. 移動平均線 (MA)
+        ma5 = talib.SMA(closes, timeperiod=5)
+        ma10 = talib.SMA(closes, timeperiod=10)
+        ma20 = talib.SMA(closes, timeperiod=20)
+        ma60 = talib.SMA(closes, timeperiod=60)
+        
+        # 2. RSI 相對強弱指標
+        rsi6 = talib.RSI(closes, timeperiod=6)
+        rsi12 = talib.RSI(closes, timeperiod=12)
+        
+        # 3. MACD 指標
+        macd, macd_signal, macd_hist = talib.MACD(closes, fastperiod=12, slowperiod=26, signalperiod=9)
+        
+        # 4. 布林通道 (Bollinger Bands)
+        upper_band, middle_band, lower_band = talib.BBANDS(closes, timeperiod=20, nbdevup=2, nbdevdn=2)
+        
+        # 5. KD 指標 (Stochastic)
+        slowk, slowd = talib.STOCH(highs, lows, closes, fastk_period=9, slowk_period=3, slowd_period=3)
+        
+        # 6. 成交量移動平均
+        volume_ma5 = talib.SMA(volumes, timeperiod=5)
+        volume_ma10 = talib.SMA(volumes, timeperiod=10)
+        
+        # 7. ATR 真實波動幅度均值
+        atr = talib.ATR(highs, lows, closes, timeperiod=14)
+        
+        # 組裝返回數據
+        indicators = []
+        for i in range(len(dates)):
+            indicators.append({
+                'date': dates[i],
+                'open': float(opens[i]),
+                'high': float(highs[i]),
+                'low': float(lows[i]),
+                'close': float(closes[i]),
+                'volume': float(volumes[i]),
+                'ma5': float(ma5[i]) if not np.isnan(ma5[i]) else None,
+                'ma10': float(ma10[i]) if not np.isnan(ma10[i]) else None,
+                'ma20': float(ma20[i]) if not np.isnan(ma20[i]) else None,
+                'ma60': float(ma60[i]) if not np.isnan(ma60[i]) else None,
+                'rsi6': float(rsi6[i]) if not np.isnan(rsi6[i]) else None,
+                'rsi12': float(rsi12[i]) if not np.isnan(rsi12[i]) else None,
+                'macd': float(macd[i]) if not np.isnan(macd[i]) else None,
+                'macd_signal': float(macd_signal[i]) if not np.isnan(macd_signal[i]) else None,
+                'macd_hist': float(macd_hist[i]) if not np.isnan(macd_hist[i]) else None,
+                'boll_upper': float(upper_band[i]) if not np.isnan(upper_band[i]) else None,
+                'boll_middle': float(middle_band[i]) if not np.isnan(middle_band[i]) else None,
+                'boll_lower': float(lower_band[i]) if not np.isnan(lower_band[i]) else None,
+                'kd_k': float(slowk[i]) if not np.isnan(slowk[i]) else None,
+                'kd_d': float(slowd[i]) if not np.isnan(slowd[i]) else None,
+                'volume_ma5': float(volume_ma5[i]) if not np.isnan(volume_ma5[i]) else None,
+                'volume_ma10': float(volume_ma10[i]) if not np.isnan(volume_ma10[i]) else None,
+                'atr': float(atr[i]) if not np.isnan(atr[i]) else None
+            })
+        
+        return jsonify({
+            'success': True,
+            'stock_code': stock_code,
+            'data': indicators,
+            'count': len(indicators)
+        })
+        
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'message': f'計算技術指標失敗: {str(e)}'
+        })
 
 # User registration and login
 @app.route('/api/register', methods=['POST'])
