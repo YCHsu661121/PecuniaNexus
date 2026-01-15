@@ -651,9 +651,14 @@ def get_stock_indicators(stock_code):
 @app.route('/api/register', methods=['POST'])
 def register_user():
     try:
+        print(f"[DEBUG] 註冊請求收到")
         data = request.json or {}
+        print(f"[DEBUG] 請求數據: {data}")
+        
         user_id = (data.get('user_id') or '').strip()
         password = (data.get('password') or '').strip()
+        
+        print(f"[DEBUG] user_id={user_id}, password_len={len(password)}")
         
         if not user_id or not password:
             return jsonify({'success': False, 'message': '使用者 ID 與密碼不能為空'})
@@ -662,12 +667,16 @@ def register_user():
             return jsonify({'success': False, 'message': '密碼至少需要 6 個字元'})
         
         password_hash = hash_password(password)
+        print(f"[DEBUG] password_hash={password_hash[:20]}...")
         
         with closing(get_conn()) as conn:
+            print(f"[DEBUG] 數據庫連接成功, DB_IS_PG={DB_IS_PG}")
             with closing(conn.cursor(row_factory=dict_row) if DB_IS_PG else conn.cursor()) as cursor:
                 # 檢查是否已存在
                 cursor.execute(q('SELECT id FROM users WHERE user_id = ?'), (user_id,))
-                if cursor.fetchone():
+                existing = cursor.fetchone()
+                print(f"[DEBUG] 檢查用戶是否存在: {existing}")
+                if existing:
                     return jsonify({'success': False, 'message': '此使用者 ID 已被註冊'})
                 
                 # 檢查是否為第一個使用者（管理員）
@@ -678,6 +687,8 @@ def register_user():
                     is_first_user = (count_row.get('cnt', 0) == 0)
                 else:
                     is_first_user = (count_row[0] == 0)
+                
+                print(f"[DEBUG] 用戶計數: {count_row}, is_first_user={is_first_user}")
                 
                 # 插入新使用者
                 if DB_IS_PG:
@@ -691,6 +702,7 @@ def register_user():
                         (user_id, password_hash, 1 if is_first_user else 0)
                     )
                 conn.commit()
+                print(f"[DEBUG] 用戶註冊成功: {user_id}")
         
         return jsonify({
             'success': True,
@@ -698,15 +710,21 @@ def register_user():
             'message': '註冊成功' + ('（您是管理員）' if is_first_user else '')
         })
     except Exception as e:
+        print(f"[ERROR] 註冊失敗: {str(e)}")
+        import traceback
+        traceback.print_exc()
         return jsonify({'success': False, 'message': f'註冊失敗: {str(e)}'})
 
 
 @app.route('/api/login', methods=['POST'])
 def login_user():
     try:
+        print(f"[DEBUG] 登入請求收到")
         data = request.json or {}
         user_id = (data.get('user_id') or '').strip()
         password = (data.get('password') or '').strip()
+        
+        print(f"[DEBUG] user_id={user_id}, password_len={len(password)}")
         
         if not user_id or not password:
             return jsonify({'success': False, 'message': '使用者 ID 與密碼不能為空'})
@@ -720,14 +738,19 @@ def login_user():
                 cursor.execute(q('SELECT * FROM users WHERE user_id = ?'), (user_id,))
                 row = cursor.fetchone()
                 
+                print(f"[DEBUG] 查詢用戶結果: {row}")
+                
                 if not row:
                     return jsonify({'success': False, 'message': '使用者不存在'})
                 
                 stored_hash = row['password_hash'] if DB_IS_PG else row['password_hash']
+                print(f"[DEBUG] stored_hash={stored_hash[:20]}..., input_hash={password_hash[:20]}...")
+                
                 if stored_hash != password_hash:
                     return jsonify({'success': False, 'message': '密碼錯誤'})
                 
                 is_admin = row.get('is_admin', False) if DB_IS_PG else bool(row['is_admin'])
+                print(f"[DEBUG] 登入成功: {user_id}, is_admin={is_admin}")
                 
         return jsonify({
             'success': True,
@@ -736,6 +759,9 @@ def login_user():
             'message': '登入成功'
         })
     except Exception as e:
+        print(f"[ERROR] 登入失敗: {str(e)}")
+        import traceback
+        traceback.print_exc()
         return jsonify({'success': False, 'message': f'登入失敗: {str(e)}'})
 
 
