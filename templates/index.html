@@ -821,6 +821,10 @@
             flex-wrap: wrap;
         }
 
+        #chartAndNewsContainer {
+            width: 100%;
+        }
+
         .chart-btn {
             padding: 10px 20px;
             background: #2a2a3e;
@@ -1112,19 +1116,21 @@
                 </div>
             </div>
             <div id="resultContent"></div>
-            <div class="chart-controls" id="chartControls" style="display:none;">
-                <button class="chart-btn active" onclick="switchChart('kline')">📊 K線圖</button>
-                <button class="chart-btn" onclick="switchChart('line')">📈 高低曲線</button>
-                <button class="chart-btn" onclick="switchChart('volume')">📦 成交量</button>
-                <button class="chart-btn" onclick="switchChart('ma')">📉 移動平均</button>
-            </div>
-            <div class="content-grid" id="contentGrid" style="display:none;">
-                <div>
-                    <div id="kline" class="kline"></div>
+            <div id="chartAndNewsContainer" style="display:none;">
+                <div class="chart-controls" id="chartControls">
+                    <button class="chart-btn active" onclick="switchChart('kline')">📊 K線圖</button>
+                    <button class="chart-btn" onclick="switchChart('line')">📈 高低曲線</button>
+                    <button class="chart-btn" onclick="switchChart('volume')">📦 成交量</button>
+                    <button class="chart-btn" onclick="switchChart('ma')">📉 移動平均</button>
                 </div>
-                <div class="news-panel" id="newsPanel">
-                    <h3>📰 相關新聞</h3>
-                    <div id="newsList">載入中...</div>
+                <div class="content-grid" id="contentGrid">
+                    <div>
+                        <div id="kline" class="kline"></div>
+                    </div>
+                    <div class="news-panel" id="newsPanel">
+                        <h3>📰 相關新聞</h3>
+                        <div id="newsList">載入中...</div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -1524,8 +1530,7 @@
             document.getElementById('resultContent').innerHTML = html;
 
             // 顯示圖表控制與新聞面板
-            document.getElementById('chartControls').style.display = 'flex';
-            document.getElementById('contentGrid').style.display = 'grid';
+            document.getElementById('chartAndNewsContainer').style.display = 'block';
 
             // 載入新聞
             loadStockNews(infoData.stock_code);
