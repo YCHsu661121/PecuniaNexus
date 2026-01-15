@@ -799,10 +799,17 @@
         }
         .kline {
             width: 100%;
-            height: 420px;
+            height: 500px;
             margin-top: 20px;
-            background: #fff;
+            background: #1a1a2e;
             border-radius: 10px;
+            border: 1px solid #2d2d44;
+        }
+
+        @media (max-width: 768px) {
+            .kline {
+                height: 350px;
+            }
         }
 
         .chart-controls {
@@ -810,26 +817,31 @@
             gap: 10px;
             margin-top: 20px;
             margin-bottom: 10px;
+            justify-content: center;
+            flex-wrap: wrap;
         }
 
         .chart-btn {
             padding: 10px 20px;
-            background: #f0f0f0;
-            border: 2px solid #ddd;
+            background: #2a2a3e;
+            border: 2px solid #5a7fc7;
             border-radius: 8px;
             cursor: pointer;
             font-size: 14px;
             transition: all 0.3s;
+            color: #5a7fc7;
+            font-weight: 600;
         }
 
         .chart-btn.active {
-            background: #667eea;
+            background: #5a7fc7;
             color: white;
-            border-color: #667eea;
+            border-color: #5a7fc7;
         }
 
         .chart-btn:hover {
             transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(90, 127, 199, 0.5);
         }
 
         .content-grid {
@@ -839,27 +851,88 @@
             margin-top: 20px;
         }
 
+        @media (max-width: 968px) {
+            .content-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .search-form {
+                flex-direction: column;
+            }
+            
+            .price-info {
+                grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            }
+        }
+
+        @media (max-width: 480px) {
+            body {
+                padding: 10px;
+            }
+            
+            .container {
+                max-width: 100%;
+            }
+            
+            .header h1 {
+                font-size: 1.8em;
+            }
+            
+            .lang-switcher {
+                top: 10px;
+                right: 10px;
+            }
+            
+            .price-info {
+                grid-template-columns: 1fr;
+            }
+        }
+
         .news-panel {
-            background: #f8f9fa;
+            background: #2a2a3e;
             padding: 20px;
             border-radius: 10px;
             max-height: 500px;
             overflow-y: auto;
+            border: 1px solid #3a3a52;
+        }
+
+        @media (max-width: 768px) {
+            .news-panel {
+                max-height: 400px;
+            }
         }
 
         .news-panel h3 {
             margin-bottom: 15px;
-            color: #333;
+            color: #c0c0c0;
             font-size: 1.2em;
         }
 
         .news-item {
             padding: 12px;
-            background: white;
+            background: #1e1e2e;
             border-radius: 8px;
             margin-bottom: 10px;
-            border-left: 3px solid #667eea;
+            border-left: 3px solid #5a7fc7;
             transition: all 0.3s;
+        }
+
+        .news-item:hover {
+            transform: translateX(5px);
+            box-shadow: 0 3px 10px rgba(90, 127, 199, 0.3);
+            background: #252538;
+        }
+
+        .news-item a {
+            color: #7a9fd7;
+            text-decoration: none;
+            font-weight: 600;
+        }
+
+        .news-item a:hover {
+            text-decoration: underline;
+            color: #9ab5e7;
         }
 
         .news-item:hover {
@@ -1464,25 +1537,36 @@
 
                 const option = {
                     animation: true,
-                    backgroundColor: '#ffffff',
-                    grid: { left: 40, right: 20, top: 10, bottom: 40 },
+                    backgroundColor: '#1a1a2e',
+                    grid: { left: 50, right: 20, top: 40, bottom: 70 },
                     tooltip: {
                         trigger: 'axis',
                         axisPointer: { type: 'cross' },
-                        valueFormatter: (v) => (v == null ? '-' : v)
+                        backgroundColor: 'rgba(50, 50, 70, 0.95)',
+                        borderColor: '#5a7fc7',
+                        borderWidth: 1,
+                        textStyle: { color: '#e0e0e0' },
+                        valueFormatter: (v) => (v == null ? '-' : Number(v).toFixed(2))
                     },
                     xAxis: {
                         type: 'category',
                         data: dates,
                         boundaryGap: true,
-                        axisLine: { lineStyle: { color: '#888' } },
-                        axisLabel: { color: '#555' }
+                        axisLine: { lineStyle: { color: '#5a7fc7' } },
+                        axisLabel: { 
+                            color: '#c0c0c0',
+                            rotate: 45,
+                            fontSize: 10
+                        }
                     },
                     yAxis: {
                         scale: true,
-                        axisLine: { lineStyle: { color: '#888' } },
-                        axisLabel: { color: '#555' },
-                        splitLine: { lineStyle: { color: 'rgba(0,0,0,0.08)' } }
+                        axisLine: { lineStyle: { color: '#5a7fc7' } },
+                        axisLabel: { 
+                            color: '#c0c0c0',
+                            formatter: (v) => Number(v).toFixed(1)
+                        },
+                        splitLine: { lineStyle: { color: 'rgba(90, 127, 199, 0.15)' } }
                     },
                     dataZoom: [
                         { type: 'inside', start: 40, end: 100 },
@@ -1530,30 +1614,53 @@
 
                 const option = {
                     animation: true,
-                    backgroundColor: '#ffffff',
-                    title: { text: '歷史高低曲線', left: 'center', textStyle: { fontSize: 16, color: '#333' } },
-                    grid: { left: 50, right: 30, top: 50, bottom: 40 },
+                    backgroundColor: '#1a1a2e',
+                    title: { 
+                        text: currentLang === 'zh' ? '歷史高低曲線' : 'Historical High-Low Line', 
+                        left: 'center',
+                        top: 10,
+                        textStyle: { fontSize: 16, color: '#e0e0e0', fontWeight: 'bold' } 
+                    },
+                    grid: { left: 50, right: 30, top: 90, bottom: 70 },
                     tooltip: {
                         trigger: 'axis',
-                        axisPointer: { type: 'cross' }
+                        axisPointer: { 
+                            type: 'cross',
+                            crossStyle: { color: '#5a7fc7' }
+                        },
+                        backgroundColor: 'rgba(50, 50, 70, 0.95)',
+                        borderColor: '#5a7fc7',
+                        borderWidth: 1,
+                        textStyle: { color: '#e0e0e0' },
+                        valueFormatter: (v) => (v == null ? '-' : Number(v).toFixed(2))
                     },
                     legend: {
-                        data: ['最高價', '最低價', '收盤價'],
-                        top: 25
+                        data: currentLang === 'zh' ? ['最高價', '最低價', '收盤價'] : ['High', 'Low', 'Close'],
+                        top: 45,
+                        textStyle: { color: '#c0c0c0', fontSize: 13 },
+                        itemWidth: 30,
+                        itemHeight: 14
                     },
                     xAxis: {
                         type: 'category',
                         data: dates,
                         boundaryGap: false,
-                        axisLine: { lineStyle: { color: '#888' } },
-                        axisLabel: { color: '#555' }
+                        axisLine: { lineStyle: { color: '#5a7fc7' } },
+                        axisLabel: { 
+                            color: '#c0c0c0',
+                            rotate: 45,
+                            fontSize: 10
+                        }
                     },
                     yAxis: {
                         type: 'value',
                         scale: true,
-                        axisLine: { lineStyle: { color: '#888' } },
-                        axisLabel: { color: '#555' },
-                        splitLine: { lineStyle: { color: 'rgba(0,0,0,0.08)' } }
+                        axisLine: { lineStyle: { color: '#5a7fc7' } },
+                        axisLabel: { 
+                            color: '#c0c0c0',
+                            formatter: (v) => Number(v).toFixed(1)
+                        },
+                        splitLine: { lineStyle: { color: 'rgba(90, 127, 199, 0.15)' } }
                     },
                     dataZoom: [
                         { type: 'inside', start: 40, end: 100 },
@@ -1561,28 +1668,61 @@
                     ],
                     series: [
                         {
-                            name: '最高價',
+                            name: currentLang === 'zh' ? '最高價' : 'High',
                             type: 'line',
                             data: highs,
                             smooth: true,
-                            lineStyle: { color: '#e74c3c', width: 2 },
-                            itemStyle: { color: '#e74c3c' }
+                            lineStyle: { color: '#ff6b9d', width: 3 },
+                            itemStyle: { color: '#ff6b9d' },
+                            showSymbol: false,
+                            areaStyle: {
+                                color: {
+                                    type: 'linear',
+                                    x: 0, y: 0, x2: 0, y2: 1,
+                                    colorStops: [
+                                        { offset: 0, color: 'rgba(255, 107, 157, 0.3)' },
+                                        { offset: 1, color: 'rgba(255, 107, 157, 0.05)' }
+                                    ]
+                                }
+                            }
                         },
                         {
-                            name: '最低價',
+                            name: currentLang === 'zh' ? '最低價' : 'Low',
                             type: 'line',
                             data: lows,
                             smooth: true,
-                            lineStyle: { color: '#27ae60', width: 2 },
-                            itemStyle: { color: '#27ae60' }
+                            lineStyle: { color: '#4ecdc4', width: 3 },
+                            itemStyle: { color: '#4ecdc4' },
+                            showSymbol: false,
+                            areaStyle: {
+                                color: {
+                                    type: 'linear',
+                                    x: 0, y: 0, x2: 0, y2: 1,
+                                    colorStops: [
+                                        { offset: 0, color: 'rgba(78, 205, 196, 0.3)' },
+                                        { offset: 1, color: 'rgba(78, 205, 196, 0.05)' }
+                                    ]
+                                }
+                            }
                         },
                         {
-                            name: '收盤價',
+                            name: currentLang === 'zh' ? '收盤價' : 'Close',
                             type: 'line',
                             data: closes,
                             smooth: true,
-                            lineStyle: { color: '#667eea', width: 2 },
-                            itemStyle: { color: '#667eea' }
+                            lineStyle: { color: '#ffe66d', width: 3 },
+                            itemStyle: { color: '#ffe66d' },
+                            showSymbol: false,
+                            areaStyle: {
+                                color: {
+                                    type: 'linear',
+                                    x: 0, y: 0, x2: 0, y2: 1,
+                                    colorStops: [
+                                        { offset: 0, color: 'rgba(255, 230, 109, 0.3)' },
+                                        { offset: 1, color: 'rgba(255, 230, 109, 0.05)' }
+                                    ]
+                                }
+                            }
                         }
                     ]
                 };
