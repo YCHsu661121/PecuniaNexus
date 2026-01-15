@@ -8,11 +8,11 @@ import os
 import hashlib
 import pandas as pd
 try:
-    import pandas_ta as ta
+    import ta
     TALIB_AVAILABLE = True
 except ImportError:
     TALIB_AVAILABLE = False
-    print("Warning: pandas-ta not installed. Technical indicators will not be available.")
+    print("Warning: ta library not installed. Technical indicators will not be available.")
 
 DB_URL = os.environ.get('DATABASE_URL', '').strip()
 DB_IS_PG = DB_URL.startswith('postgres://') or DB_URL.startswith('postgresql://')
@@ -457,13 +457,13 @@ def get_stock_history(stock_code):
 @app.route('/api/stock/indicators/<stock_code>')
 def get_stock_indicators(stock_code):
     """
-    API 端點：使用 pandas-ta 計算技術指標
+    API 端點：使用 ta 庫計算技術指標
     返回 K 線數據 + MA + RSI + MACD + BOLL 等指標
     """
     if not TALIB_AVAILABLE:
         return jsonify({
             'success': False,
-            'message': 'pandas-ta not installed'
+            'message': 'ta library not installed'
         })
     
     try:
@@ -489,38 +489,38 @@ def get_stock_indicators(stock_code):
         
         # 計算技術指標
         # 1. 移動平均線 (MA)
-        df['ma5'] = ta.sma(df['close'], length=5)
-        df['ma10'] = ta.sma(df['close'], length=10)
-        df['ma20'] = ta.sma(df['close'], length=20)
-        df['ma60'] = ta.sma(df['close'], length=60)
+        df['ma5'] = ta.trend.sma_indicator(df['close'], window=5)
+        df['ma10'] = ta.trend.sma_indicator(df['close'], window=10)
+        df['ma20'] = ta.trend.sma_indicator(df['close'], window=20)
+        df['ma60'] = ta.trend.sma_indicator(df['close'], window=60)
         
         # 2. RSI 相對強弱指標
-        df['rsi6'] = ta.rsi(df['close'], length=6)
-        df['rsi12'] = ta.rsi(df['close'], length=12)
+        df['rsi6'] = ta.momentum.rsi(df['close'], window=6)
+        df['rsi12'] = ta.momentum.rsi(df['close'], window=12)
         
         # 3. MACD 指標
-        macd_df = ta.macd(df['close'], fast=12, slow=26, signal=9)
-        df['macd'] = macd_df['MACD_12_26_9']
-        df['macd_signal'] = macd_df['MACDs_12_26_9']
-        df['macd_hist'] = macd_df['MACDh_12_26_9']
+        macd_indicator = ta.trend.MACD(df['close'], window_slow=26, window_fast=12, window_sign=9)
+        df['macd'] = macd_indicator.macd()
+        df['macd_signal'] = macd_indicator.macd_signal()
+        df['macd_hist'] = macd_indicator.macd_diff()
         
         # 4. 布林通道 (Bollinger Bands)
-        bbands_df = ta.bbands(df['close'], length=20, std=2)
-        df['boll_upper'] = bbands_df['BBU_20_2.0']
-        df['boll_middle'] = bbands_df['BBM_20_2.0']
-        df['boll_lower'] = bbands_df['BBL_20_2.0']
+        bollinger = ta.volatility.BollingerBands(df['close'], window=20, window_dev=2)
+        df['boll_upper'] = bollinger.bollinger_hband()
+        df['boll_middle'] = bollinger.bollinger_mavg()
+        df['boll_lower'] = bollinger.bollinger_lband()
         
         # 5. KD 指標 (Stochastic)
-        stoch_df = ta.stoch(df['high'], df['low'], df['close'], k=9, d=3, smooth_k=3)
-        df['kd_k'] = stoch_df['STOCHk_9_3_3']
-        df['kd_d'] = stoch_df['STOCHd_9_3_3']
+        stoch = ta.momentum.StochasticOscillator(df['high'], df['low'], df['close'], window=9, smooth_window=3)
+        df['kd_k'] = stoch.stoch()
+        df['kd_d'] = stoch.stoch_signal()
         
         # 6. 成交量移動平均
-        df['volume_ma5'] = ta.sma(df['volume'], length=5)
-        df['volume_ma10'] = ta.sma(df['volume'], length=10)
+        df['volume_ma5'] = ta.trend.sma_indicator(df['volume'], window=5)
+        df['volume_ma10'] = ta.trend.sma_indicator(df['volume'], window=10)
         
         # 7. ATR 真實波動幅度均值
-        df['atr'] = ta.atr(df['high'], df['low'], df['close'], length=14)
+        df['atr'] = ta.volatility.average_true_range(df['high'], df['low'], df['close'], window=14)
         
         # 組裝返回數據
         indicators = []
