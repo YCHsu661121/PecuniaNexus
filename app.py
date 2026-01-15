@@ -6,13 +6,13 @@ import sqlite3
 from contextlib import closing
 import os
 import hashlib
-import numpy as np
+import pandas as pd
 try:
-    import talib
+    import pandas_ta as ta
     TALIB_AVAILABLE = True
 except ImportError:
     TALIB_AVAILABLE = False
-    print("Warning: TA-Lib not installed. Technical indicators will not be available.")
+    print("Warning: pandas-ta not installed. Technical indicators will not be available.")
 
 DB_URL = os.environ.get('DATABASE_URL', '').strip()
 DB_IS_PG = DB_URL.startswith('postgres://') or DB_URL.startswith('postgresql://')
@@ -457,13 +457,13 @@ def get_stock_history(stock_code):
 @app.route('/api/stock/indicators/<stock_code>')
 def get_stock_indicators(stock_code):
     """
-    API 端點：使用 TA-Lib 計算技術指標
+    API 端點：使用 pandas-ta 計算技術指標
     返回 K 線數據 + MA + RSI + MACD + BOLL 等指標
     """
     if not TALIB_AVAILABLE:
         return jsonify({
             'success': False,
-            'message': 'TA-Lib not installed'
+            'message': 'pandas-ta not installed'
         })
     
     try:
@@ -479,68 +479,76 @@ def get_stock_indicators(stock_code):
                 'message': '歷史數據不足 (需要至少 60 天)'
             })
         
-        # 提取 OHLCV 數據
-        dates = [row[0] for row in data]
-        opens = np.array([float(row[3]) for row in data], dtype=float)
-        highs = np.array([float(row[4]) for row in data], dtype=float)
-        lows = np.array([float(row[5]) for row in data], dtype=float)
-        closes = np.array([float(row[6]) for row in data], dtype=float)
-        volumes = np.array([float(row[1]) for row in data], dtype=float)
+        # 轉換為 DataFrame
+        df = pd.DataFrame(data, columns=['date', 'volume', 'amount', 'open', 'high', 'low', 'close'])
+        df['open'] = pd.to_numeric(df['open'], errors='coerce')
+        df['high'] = pd.to_numeric(df['high'], errors='coerce')
+        df['low'] = pd.to_numeric(df['low'], errors='coerce')
+        df['close'] = pd.to_numeric(df['close'], errors='coerce')
+        df['volume'] = pd.to_numeric(df['volume'], errors='coerce')
         
         # 計算技術指標
         # 1. 移動平均線 (MA)
-        ma5 = talib.SMA(closes, timeperiod=5)
-        ma10 = talib.SMA(closes, timeperiod=10)
-        ma20 = talib.SMA(closes, timeperiod=20)
-        ma60 = talib.SMA(closes, timeperiod=60)
+        df['ma5'] = ta.sma(df['close'], length=5)
+        df['ma10'] = ta.sma(df['close'], length=10)
+        df['ma20'] = ta.sma(df['close'], length=20)
+        df['ma60'] = ta.sma(df['close'], length=60)
         
         # 2. RSI 相對強弱指標
-        rsi6 = talib.RSI(closes, timeperiod=6)
-        rsi12 = talib.RSI(closes, timeperiod=12)
+        df['rsi6'] = ta.rsi(df['close'], length=6)
+        df['rsi12'] = ta.rsi(df['close'], length=12)
         
         # 3. MACD 指標
-        macd, macd_signal, macd_hist = talib.MACD(closes, fastperiod=12, slowperiod=26, signalperiod=9)
+        macd_df = ta.macd(df['close'], fast=12, slow=26, signal=9)
+        df['macd'] = macd_df['MACD_12_26_9']
+        df['macd_signal'] = macd_df['MACDs_12_26_9']
+        df['macd_hist'] = macd_df['MACDh_12_26_9']
         
         # 4. 布林通道 (Bollinger Bands)
-        upper_band, middle_band, lower_band = talib.BBANDS(closes, timeperiod=20, nbdevup=2, nbdevdn=2)
+        bbands_df = ta.bbands(df['close'], length=20, std=2)
+        df['boll_upper'] = bbands_df['BBU_20_2.0']
+        df['boll_middle'] = bbands_df['BBM_20_2.0']
+        df['boll_lower'] = bbands_df['BBL_20_2.0']
         
         # 5. KD 指標 (Stochastic)
-        slowk, slowd = talib.STOCH(highs, lows, closes, fastk_period=9, slowk_period=3, slowd_period=3)
+        stoch_df = ta.stoch(df['high'], df['low'], df['close'], k=9, d=3, smooth_k=3)
+        df['kd_k'] = stoch_df['STOCHk_9_3_3']
+        df['kd_d'] = stoch_df['STOCHd_9_3_3']
         
         # 6. 成交量移動平均
-        volume_ma5 = talib.SMA(volumes, timeperiod=5)
-        volume_ma10 = talib.SMA(volumes, timeperiod=10)
+        df['volume_ma5'] = ta.sma(df['volume'], length=5)
+        df['volume_ma10'] = ta.sma(df['volume'], length=10)
         
         # 7. ATR 真實波動幅度均值
-        atr = talib.ATR(highs, lows, closes, timeperiod=14)
+        df['atr'] = ta.atr(df['high'], df['low'], df['close'], length=14)
         
         # 組裝返回數據
         indicators = []
-        for i in range(len(dates)):
+        for _, row in df.iterrows():
             indicators.append({
-                'date': dates[i],
-                'open': float(opens[i]),
-                'high': float(highs[i]),
-                'low': float(lows[i]),
-                'close': float(closes[i]),
-                'volume': float(volumes[i]),
-                'ma5': float(ma5[i]) if not np.isnan(ma5[i]) else None,
-                'ma10': float(ma10[i]) if not np.isnan(ma10[i]) else None,
-                'ma20': float(ma20[i]) if not np.isnan(ma20[i]) else None,
-                'ma60': float(ma60[i]) if not np.isnan(ma60[i]) else None,
-                'rsi6': float(rsi6[i]) if not np.isnan(rsi6[i]) else None,
-                'rsi12': float(rsi12[i]) if not np.isnan(rsi12[i]) else None,
-                'macd': float(macd[i]) if not np.isnan(macd[i]) else None,
-                'macd_signal': float(macd_signal[i]) if not np.isnan(macd_signal[i]) else None,
-                'macd_hist': float(macd_hist[i]) if not np.isnan(macd_hist[i]) else None,
-                'boll_upper': float(upper_band[i]) if not np.isnan(upper_band[i]) else None,
-                'boll_middle': float(middle_band[i]) if not np.isnan(middle_band[i]) else None,
-                'boll_lower': float(lower_band[i]) if not np.isnan(lower_band[i]) else None,
-                'kd_k': float(slowk[i]) if not np.isnan(slowk[i]) else None,
-                'kd_d': float(slowd[i]) if not np.isnan(slowd[i]) else None,
-                'volume_ma5': float(volume_ma5[i]) if not np.isnan(volume_ma5[i]) else None,
-                'volume_ma10': float(volume_ma10[i]) if not np.isnan(volume_ma10[i]) else None,
-                'atr': float(atr[i]) if not np.isnan(atr[i]) else None
+                'date': row['date'],
+                'open': float(row['open']) if pd.notna(row['open']) else None,
+                'high': float(row['high']) if pd.notna(row['high']) else None,
+                'low': float(row['low']) if pd.notna(row['low']) else None,
+                'close': float(row['close']) if pd.notna(row['close']) else None,
+                'volume': float(row['volume']) if pd.notna(row['volume']) else None,
+                'ma5': float(row['ma5']) if pd.notna(row['ma5']) else None,
+                'ma10': float(row['ma10']) if pd.notna(row['ma10']) else None,
+                'ma20': float(row['ma20']) if pd.notna(row['ma20']) else None,
+                'ma60': float(row['ma60']) if pd.notna(row['ma60']) else None,
+                'rsi6': float(row['rsi6']) if pd.notna(row['rsi6']) else None,
+                'rsi12': float(row['rsi12']) if pd.notna(row['rsi12']) else None,
+                'macd': float(row['macd']) if pd.notna(row['macd']) else None,
+                'macd_signal': float(row['macd_signal']) if pd.notna(row['macd_signal']) else None,
+                'macd_hist': float(row['macd_hist']) if pd.notna(row['macd_hist']) else None,
+                'boll_upper': float(row['boll_upper']) if pd.notna(row['boll_upper']) else None,
+                'boll_middle': float(row['boll_middle']) if pd.notna(row['boll_middle']) else None,
+                'boll_lower': float(row['boll_lower']) if pd.notna(row['boll_lower']) else None,
+                'kd_k': float(row['kd_k']) if pd.notna(row['kd_k']) else None,
+                'kd_d': float(row['kd_d']) if pd.notna(row['kd_d']) else None,
+                'volume_ma5': float(row['volume_ma5']) if pd.notna(row['volume_ma5']) else None,
+                'volume_ma10': float(row['volume_ma10']) if pd.notna(row['volume_ma10']) else None,
+                'atr': float(row['atr']) if pd.notna(row['atr']) else None
             })
         
         return jsonify({

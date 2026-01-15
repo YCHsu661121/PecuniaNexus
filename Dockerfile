@@ -7,23 +7,9 @@ WORKDIR /app
 # 複製需求檔案
 COPY requirements.txt .
 
-# 一次性安裝所有依賴：系統庫 + TA-Lib C 庫 + Python 包
-RUN apt-get update && apt-get install -y \
-    wget \
-    build-essential \
-    && wget http://prdownloads.sourceforge.net/ta-lib/ta-lib-0.4.0-src.tar.gz \
-    && tar -xzf ta-lib-0.4.0-src.tar.gz \
-    && cd ta-lib/ \
-    && ./configure --prefix=/usr \
-    && make \
-    && make install \
-    && cd .. \
-    && rm -rf ta-lib ta-lib-0.4.0-src.tar.gz \
-    && ldconfig \
-    && pip install --no-cache-dir --upgrade pip setuptools wheel \
-    && pip install --no-cache-dir numpy==1.23.5 \
-    && pip install --no-cache-dir TA-Lib==0.4.28 \
-    && pip install --no-cache-dir Flask==3.0.0 requests==2.31.0 Werkzeug==3.0.1 "psycopg[binary]==3.1.18"
+# 安裝 Python 依賴套件
+RUN pip install --no-cache-dir --upgrade pip setuptools wheel \
+    && pip install --no-cache-dir -r requirements.txt
 
 # 複製應用程式檔案
 COPY . .
