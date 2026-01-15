@@ -22,12 +22,8 @@ RUN apt-get update && apt-get install -y \
     && ldconfig \
     && pip install --no-cache-dir --upgrade pip setuptools wheel \
     && pip install --no-cache-dir numpy==1.23.5 \
-    && pip install --no-cache-dir ta-lib-binary \
-    && pip install --no-cache-dir Flask==3.0.0 requests==2.31.0 Werkzeug==3.0.1 "psycopg[binary]==3.1.18" \
-    && apt-get remove -y wget \
-    && apt-get autoremove -y \
-    && apt-get clean \
-    && rm -rf /var/lib/apt/lists/*
+    && pip install --no-cache-dir TA-Lib==0.4.28 \
+    && pip install --no-cache-dir Flask==3.0.0 requests==2.31.0 Werkzeug==3.0.1 "psycopg[binary]==3.1.18"
 
 # 複製應用程式檔案
 COPY . .
