@@ -1,6 +1,17 @@
 version: '3.8'
 
 services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: pecunianexus-postgres
+    environment:
+      - POSTGRES_DB=pecunia
+      - POSTGRES_USER=app
+      - POSTGRES_PASSWORD=appsecret
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    restart: unless-stopped
+
   pecunianexus:
     build: .
     container_name: pecunianexus
@@ -8,10 +19,14 @@ services:
       - "5788:5788"
     environment:
       - FLASK_ENV=development
+      - DATABASE_URL=postgresql://app:appsecret@postgres:5432/pecunia
     restart: unless-stopped
+    depends_on:
+      - postgres
     volumes:
       - .:/app
       - stock-data:/app/data
 
 volumes:
   stock-data:
+  pgdata:

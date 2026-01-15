@@ -49,6 +49,21 @@
             margin-bottom: 20px;
         }
 
+        .user-form {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+
+        .user-input {
+            flex: 0 0 220px;
+            padding: 10px;
+            font-size: 14px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            outline: none;
+        }
+
         .search-input {
             flex: 1;
             padding: 15px;
@@ -662,6 +677,13 @@
             color: white;
             border-color: #667eea;
         }
+        .kline {
+            width: 100%;
+            height: 420px;
+            margin-top: 20px;
+            background: #fff;
+            border-radius: 10px;
+        }
     </style>
 </head>
 <body>
@@ -672,6 +694,10 @@
         </div>
 
         <div class="search-box">
+            <div class="user-form">
+                <input type="text" class="user-input" id="userIdInput" placeholder="輸入使用者 ID（例如：demo）">
+                <button class="search-btn" onclick="loadMyFavorites()">載入我的最愛</button>
+            </div>
             <div class="search-form">
                 <input type="text" class="search-input" id="stockInput" placeholder="請輸入股票代碼（例如：2330）">
                 <button class="search-btn" onclick="searchStock()">查詢</button>
@@ -689,10 +715,15 @@
 
         <div class="result-box" id="resultBox">
             <div id="resultContent"></div>
+            <div id="favoritesList" style="margin-top: 16px;"></div>
         </div>
     </div>
 
+    <!-- ECharts CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/echarts@5/dist/echarts.min.js"></script>
     <script>
+        let klineChart = null;
+
         function quickSearch(stockCode) {
             document.getElementById('stockInput').value = stockCode;
             searchStock();
@@ -741,6 +772,9 @@
                         <div class="stock-title">${infoData.stock_name}</div>
                         <div class="stock-code">股票代碼: ${infoData.stock_code}</div>
                     </div>
+                    <div>
+                        <button class="search-btn" style="padding:10px 16px" onclick="addToFavorites('${infoData.stock_code}', '${infoData.stock_name}')">加入最愛</button>
+                    </div>
                 </div>
             `;
 
@@ -771,6 +805,9 @@
                 </div>
             `;
 
+            // K 線圖容器
+            html += `<div id="kline" class="kline"></div>`;
+
             // 歷史資料表格
             if (historyData.success && historyData.data && historyData.data.length > 0) {
                 html += '<h3>本月歷史資料</h3>';
@@ -797,6 +834,137 @@
             html += '</div>';
 
             document.getElementById('resultContent').innerHTML = html;
+
+            // 繪製 K 線圖（若有歷史資料）
+            if (historyData.success && historyData.data && historyData.data.length > 0) {
+                renderKline(historyData);
+            }
+        }
+
+        async function addToFavorites(stockCode, stockName) {
+            const userId = document.getElementById('userIdInput').value.trim();
+            if (!userId) {
+                alert('請先輸入使用者 ID');
+                return;
+            }
+            try {
+                const res = await fetch('/api/favorites', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ user_id: userId, stock_code: stockCode, stock_name: stockName })
+                });
+                const data = await res.json();
+                if (!data.success) throw new Error(data.message || '加入最愛失敗');
+                await loadMyFavorites();
+            } catch (e) {
+                alert('加入最愛失敗：' + e.message);
+            }
+        }
+
+        async function loadMyFavorites() {
+            const userId = document.getElementById('userIdInput').value.trim();
+            if (!userId) {
+                alert('請先輸入使用者 ID');
+                return;
+            }
+            try {
+                const res = await fetch(`/api/favorites?user_id=${encodeURIComponent(userId)}`);
+                const data = await res.json();
+                if (!data.success) throw new Error(data.message || '讀取最愛失敗');
+                const listEl = document.getElementById('favoritesList');
+                const items = (data.data || []).map(it => {
+                    const code = it.stock_code || '';
+                    const name = it.stock_name || '';
+                    return `<span class="stock-tag" onclick="quickSearch('${code}')">${code} ${name}</span>`;
+                }).join(' ');
+                listEl.innerHTML = items ? `<div style="margin-top:8px; color:#666;">我的最愛：</div><div style="margin-top:6px; display:flex; flex-wrap:wrap; gap:8px;">${items}</div>` : '<div style="margin-top:8px; color:#999;">尚無最愛</div>';
+            } catch (e) {
+                alert('讀取最愛失敗：' + e.message);
+            }
+        }
+
+        function parseNumber(value) {
+            if (value === null || value === undefined) return null;
+            const v = String(value).replace(/,/g, '').trim();
+            if (v === '-' || v === '' || v.toLowerCase() === 'nan') return null;
+            const n = Number(v);
+            return isNaN(n) ? null : n;
+        }
+
+        function normalizeDate(d) {
+            // 將 2025/01/02 或 114/01/02 格式轉為 Date 物件或字串
+            // 直接回傳原字串以供 X 軸類目顯示
+            return String(d).replace(/\./g, '/');
+        }
+
+        function renderKline(historyData) {
+            try {
+                const raw = historyData.data; // 每列: [日期, 成交股數, 成交金額, 開盤價, 最高價, 最低價, 收盤價, 漲跌價差, 成交筆數]
+                // 取最近 60 筆（若不足則全取），並依時間先後排序
+                const rows = raw.slice(-60);
+                const dates = rows.map(r => normalizeDate(r[0]));
+                const ohlc = rows.map(r => [
+                    parseNumber(r[3]), // 開
+                    parseNumber(r[6]), // 收
+                    parseNumber(r[4]), // 高
+                    parseNumber(r[5])  // 低
+                ]);
+
+                const el = document.getElementById('kline');
+                if (!el) return;
+                if (klineChart) {
+                    klineChart.dispose();
+                }
+                klineChart = echarts.init(el);
+
+                const option = {
+                    animation: true,
+                    backgroundColor: '#ffffff',
+                    grid: { left: 40, right: 20, top: 10, bottom: 40 },
+                    tooltip: {
+                        trigger: 'axis',
+                        axisPointer: { type: 'cross' },
+                        valueFormatter: (v) => (v == null ? '-' : v)
+                    },
+                    xAxis: {
+                        type: 'category',
+                        data: dates,
+                        boundaryGap: true,
+                        axisLine: { lineStyle: { color: '#888' } },
+                        axisLabel: { color: '#555' }
+                    },
+                    yAxis: {
+                        scale: true,
+                        axisLine: { lineStyle: { color: '#888' } },
+                        axisLabel: { color: '#555' },
+                        splitLine: { lineStyle: { color: 'rgba(0,0,0,0.08)' } }
+                    },
+                    dataZoom: [
+                        { type: 'inside', start: 40, end: 100 },
+                        { start: 40, end: 100 }
+                    ],
+                    series: [
+                        {
+                            name: 'K線',
+                            type: 'candlestick',
+                            data: ohlc,
+                            itemStyle: {
+                                color: '#e74c3c',      // 漲（收>=開）用紅
+                                color0: '#27ae60',     // 跌（收<開）用綠
+                                borderColor: '#e74c3c',
+                                borderColor0: '#27ae60'
+                            }
+                        }
+                    ]
+                };
+
+                klineChart.setOption(option);
+                window.addEventListener('resize', () => {
+                    if (klineChart) klineChart.resize();
+                });
+            } catch (e) {
+                console.error('Render K-line error:', e);
+            }
         }
 
         // Enter 鍵搜尋
