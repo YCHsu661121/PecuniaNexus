@@ -1,221 +1,351 @@
-# PecuniaNexus - 台股即時查詢系統
+# 🤖 AI 智慧選股高手 / AI Smart Stock Picker
 
-一個功能完整的台灣股票市場即時查詢與分析平台，支援多用戶管理、圖表分析與新聞追蹤。
+> 運用 AI 技術輔助您的投資決策，提供台灣股市即時資訊查詢與智能分析
+> 
+> AI-powered investment decision assistant providing real-time Taiwan stock market information and intelligent analysis
 
-## ✨ 功能特色
-
-### 核心功能
-- 📈 **即時股票資訊查詢** - 查詢台股即時價格、開高低收與成交量
-- 📊 **雙圖表模式** - K線圖與高低曲線圖即時切換
-- 📰 **新聞整合** - 自動抓取股票相關新聞（Google News RSS）
-- 🎨 **美觀介面** - 現代化 UI 設計，響應式佈局
-
-### 用戶系統
-- 🔐 **註冊與登入** - SHA256 密碼加密，安全可靠
-- 👑 **管理員機制** - 首位註冊用戶自動成為管理員
-- 💖 **個人最愛** - 收藏常用股票，快速查詢
-- 👥 **多帳號支援** - 每位用戶獨立管理最愛清單
-
-### 管理員特權
-- 📊 **全域監控** - 查看所有用戶的最愛股票
-- 📈 **用戶分析** - 了解熱門關注股票
-- 🔍 **數據透明** - 分組顯示各用戶收藏
-
-### 技術特性
-- 🗄️ **PostgreSQL 資料庫** - 穩定可靠的數據儲存
-- 🐳 **Docker 容器化** - 一鍵部署，環境隔離
-- 🔄 **SQLite 備援** - 未設定資料庫時自動降級
-- 📉 **ECharts 視覺化** - 專業級圖表展示
-
-## 🖥️ 系統需求
-
-- Docker & Docker Compose
-- 或 Python 3.11+ (本機運行模式)
-
-## 🚀 快速開始
-
-### 方法 1: Docker Compose（推薦）
-
-```bash
-cd PecuniaNexus
-docker compose up -d
-```
-
-訪問：http://localhost:5788
-
-停止服務：
-```bash
-docker compose down
-```
-
-### 方法 2: 本機 Python（SQLite 模式）
-
-```bash
-pip install -r requirements.txt
-python app.py
-```
-
-## 📖 使用說明
-
-### 首次使用
-1. 開啟 http://localhost:5788
-2. 點擊「✨ 註冊」建立帳號（首位註冊者為管理員）
-3. 使用帳號密碼登入系統
-
-### 查詢股票
-1. 輸入股票代碼（例：2330）
-2. 查看即時資訊、價格走勢
-3. 點擊「📊 K線圖」或「📈 高低曲線」切換圖表
-4. 右側查看相關新聞報導
-
-### 管理最愛
-1. 查詢股票後點擊「加入最愛」按鈕
-2. 點擊「💖 載入我的最愛」查看收藏
-3. 管理員可查看所有用戶的最愛清單
-
-## 🔥 熱門股票代碼
-
-- 2330 台積電 (TSMC)
-- 2317 鴻海 (Foxconn)
-- 2454 聯發科 (MediaTek)
-- 2412 中華電 (Chunghwa Telecom)
-- 2882 國泰金 (Cathay Financial)
-- 2303 聯電 (UMC)
-
-## 🛠️ 技術架構
-
-### 後端
-- **框架**: Python Flask 3.0
-- **資料庫**: PostgreSQL 16 (主) / SQLite 3 (備)
-- **ORM**: psycopg 3.1 (PostgreSQL adapter)
-- **API**: 台灣證券交易所公開資料
-
-### 前端
-- **基礎**: HTML5 + CSS3 + JavaScript (ES6+)
-- **圖表**: ECharts 5.x
-- **設計**: 漸層背景、卡片式佈局、響應式網格
-
-### 容器化
-- **服務編排**: Docker Compose
-- **應用容器**: Python 3.11-slim
-- **資料庫容器**: PostgreSQL 16-alpine
-- **持久化**: Docker Volumes
-
-## 📁 專案結構
-
-```
-PecuniaNexus/
-├── app.py                  # Flask 主程式 (API 端點、資料庫邏輯)
-├── templates/
-│   └── index.html          # 前端 SPA (含圖表與新聞模組)
-├── Dockerfile              # 應用容器定義
-├── docker-compose.yml      # 服務編排設定 (含 PostgreSQL)
-├── requirements.txt        # Python 依賴清單
-├── .gitignore              # Git 忽略規則
-└── README.md               # 專案說明文件
-```
-
-## 🔗 API 端點
-
-### 股票查詢
-- `GET /api/stock/<code>` - 取得即時股票資訊
-- `GET /api/stock/history/<code>` - 取得歷史交易資料
-- `GET /api/news/<code>` - 取得股票相關新聞
-
-### 用戶系統
-- `POST /api/register` - 用戶註冊
-- `POST /api/login` - 用戶登入
-
-### 最愛管理
-- `GET /api/favorites?user_id=<id>` - 取得最愛清單（管理員可查看全部）
-- `POST /api/favorites` - 新增最愛股票
-- `GET /api/favorites/last?user_id=<id>` - 取得最後一筆最愛
-- `DELETE /api/favorites/<id>` - 刪除最愛
-
-### 其他
-- `GET /api/watchlist` - 取得關注清單
-- `POST /api/watchlist` - 新增關注股票
-- `DELETE /api/watchlist/<id>` - 刪除關注
-- `GET /api/history` - 取得查詢歷史
-- `POST /api/history` - 新增查詢記錄
-- `GET /api/categories` - 取得股票分類
-
-## ⚙️ 環境變數
-
-| 變數 | 說明 | 預設值 |
-|------|------|--------|
-| `DATABASE_URL` | PostgreSQL 連線字串 | 無（使用 SQLite） |
-| `FLASK_ENV` | Flask 環境模式 | `development` |
-
-範例（docker-compose.yml 已設定）：
-```yaml
-DATABASE_URL=postgresql://app:appsecret@postgres:5432/pecunia
-```
-
-## 📊 資料庫結構
-
-### users（用戶表）
-- `id` - 主鍵
-- `user_id` - 用戶帳號（唯一）
-- `password_hash` - SHA256 加密密碼
-- `is_admin` - 管理員標記
-- `created_at` - 建立時間
-
-### favorites（最愛表）
-- `id` - 主鍵
-- `user_id` - 用戶帳號
-- `stock_code` - 股票代碼
-- `stock_name` - 股票名稱
-- `liked_time` - 收藏時間
-
-### watchlist（關注表）
-- `id` - 主鍵
-- `stock_code` - 股票代碼
-- `stock_name` - 股票名稱
-- `category` - 分類
-- `added_time` - 加入時間
-
-### search_history（查詢歷史）
-- `id` - 主鍵
-- `stock_code` - 股票代碼
-- `stock_name` - 股票名稱
-- `search_time` - 查詢時間
-
-## 🔒 安全性
-
-- ✅ 密碼使用 SHA256 雜湊儲存
-- ✅ SQL 參數化查詢防止注入
-- ✅ HTTPS 可透過反向代理啟用
-- ✅ 環境變數管理敏感資訊
-
-## 🌐 資料來源
-
-- **即時資訊**: 台灣證券交易所（TWSE）mis API
-- **歷史資料**: 台灣證券交易所 STOCK_DAY API
-- **新聞來源**: Google News RSS Feed
-
-## ⚠️ 注意事項
-
-- 📅 資料更新時間依台灣證交所而定
-- 🕒 非交易時間可能無法獲取即時資料
-- 💡 僅供參考，不構成投資建議
-- 🔐 首位註冊用戶自動成為管理員，請妥善保管帳號
-
-## 🎯 未來規劃
-
-- [ ] 技術指標計算（RSI、MACD、KD 等）
-- [ ] 自選股價提醒（價格突破通知）
-- [ ] 多股票比較功能
-- [ ] 匯出報表（PDF/Excel）
-- [ ] WebSocket 即時推送
-- [ ] 行動版 App
-
-## 📄 授權
-
-MIT License
+[![Python](https://img.shields.io/badge/Python-3.9+-blue.svg)](https://www.python.org/)
+[![Flask](https://img.shields.io/badge/Flask-3.0-green.svg)](https://flask.palletsprojects.com/)
+[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16-blue.svg)](https://www.postgresql.org/)
+[![Docker](https://img.shields.io/badge/Docker-Compose-blue.svg)](https://www.docker.com/)
 
 ---
 
-**專案名稱**: PecuniaNexus  
-**意涵**: Pecunia（拉丁語：金錢） + Nexus（連結），金融數據的智慧樞紐  
-**開發年份**: 2026
+## 📖 語言 / Language
+
+- [繁體中文](#繁體中文)
+- [English](#english)
+
+---
+
+## 繁體中文
+
+### ✨ 核心功能
+
+#### 🎯 核心查詢功能
+- **即時股價查詢**：透過台灣證券交易所 API 獲取最新股價資訊
+- **歷史資料分析**：提供每月歷史交易數據與趨勢分析
+- **多重視覺化圖表**：
+  - 📊 **K線圖（蠟燭圖）**：展示開盤、最高、最低、收盤價格
+  - 📈 **高低曲線圖**：歷史高低價格趨勢線
+  - 圖表一鍵切換，靈活查看
+- **📰 即時新聞整合**：自動抓取 Google News 相關股票新聞
+
+#### 👥 使用者系統
+- **帳號註冊/登入**：多用戶支援，每位使用者擁有獨立空間
+- **個人收藏夾**：儲存並快速查詢最愛股票
+- **SHA256 密碼加密**：確保帳戶安全性
+- **會話管理**：記住登入狀態
+
+#### 👑 管理員特權
+- **首位註冊自動升級**：第一個註冊的使用者自動成為管理員
+- **全域收藏查看**：管理員可以查看所有使用者的收藏股票
+- **使用者數據統計**：了解系統整體使用情況
+
+#### 🌐 多語言支援
+- **中英文切換**：一鍵切換介面語言
+- **完整雙語翻譯**：所有文字、按鈕、提示訊息均支援雙語
+
+#### 🌙 深色護眼模式
+- **深色主題設計**：降低眼睛疲勞，適合長時間使用
+- **高對比配色**：確保資訊清晰易讀
+- **現代化 UI**：流暢動畫與漸變效果
+
+### 🚀 快速開始
+
+#### 方式一：Docker Compose（推薦）
+
+```bash
+# 克隆專案
+git clone https://github.com/YCHsu661121/PecuniaNexus.git
+cd PecuniaNexus
+
+# 啟動服務
+docker compose up -d
+
+# 存取應用程式
+# 開啟瀏覽器訪問 http://localhost:5788
+```
+
+#### 方式二：本地 Python 環境
+
+```bash
+# 安裝依賴
+pip install -r requirements.txt
+
+# 啟動應用
+python app.py
+
+# 存取應用程式
+# 開啟瀏覽器訪問 http://localhost:5788
+```
+
+### 📊 使用說明
+
+1. **註冊/登入**
+   - 首次使用請註冊帳號（首位註冊者自動成為管理員）
+   - 密碼至少需要 6 個字元
+
+2. **查詢股票**
+   - 在搜尋框輸入股票代碼（例如：2330）
+   - 點擊熱門股票標籤快速查詢
+
+3. **切換圖表類型**
+   - 📊 K線圖：詳細的價格走勢分析
+   - 📈 高低曲線：簡化的趨勢視圖
+
+4. **管理收藏**
+   - 查詢股票後點擊「加入最愛」
+   - 點擊「載入我的最愛」快速查看收藏股票
+
+5. **切換語言**
+   - 點擊右上角語言按鈕（中文/English）
+
+### 🔥 熱門股票代碼
+
+- **2330** 台積電 (TSMC)
+- **2317** 鴻海 (Foxconn)
+- **2454** 聯發科 (MediaTek)
+- **2412** 中華電 (Chunghwa Telecom)
+- **2882** 國泰金 (Cathay Financial)
+- **2303** 聯電 (UMC)
+
+### 🛠️ 技術架構
+
+#### 後端技術
+- **框架**: Python Flask 3.0
+- **資料庫**: PostgreSQL 16 (主要) / SQLite 3 (備援)
+- **資料庫驅動**: psycopg 3.1.18
+- **加密**: SHA256 密碼雜湊
+- **資料來源**: 台灣證券交易所 API + Google News RSS
+
+#### 前端技術
+- **基礎**: HTML5 + CSS3 + JavaScript ES6+
+- **圖表庫**: ECharts 5.x
+- **設計**: 深色主題 + 漸層效果 + 響應式佈局
+
+#### 部署方案
+- **容器化**: Docker + Docker Compose
+- **健康檢查**: PostgreSQL 啟動依賴管理
+- **資料持久化**: Docker Volume
+
+### 📡 API 端點
+
+#### 認證相關
+- `POST /api/register` - 使用者註冊
+- `POST /api/login` - 使用者登入
+
+#### 股票查詢
+- `GET /api/stock/<code>` - 查詢即時股價
+- `GET /api/history/<code>` - 查詢歷史資料
+- `GET /api/news/<code>` - 查詢相關新聞
+
+#### 收藏管理
+- `GET /api/favorites` - 取得收藏清單
+- `POST /api/favorites` - 新增收藏
+- `DELETE /api/favorites/<code>` - 刪除收藏
+
+### 🗄️ 資料庫架構
+
+#### users 表
+- `id` (INTEGER) - 使用者 ID
+- `user_id` (TEXT) - 使用者帳號
+- `password_hash` (TEXT) - SHA256 密碼雜湊
+- `is_admin` (INTEGER) - 管理員標記
+- `created_at` (TIMESTAMP) - 建立時間
+
+#### favorites 表
+- `id` (INTEGER) - 紀錄 ID
+- `user_id` (TEXT) - 使用者帳號
+- `stock_code` (TEXT) - 股票代碼
+- `stock_name` (TEXT) - 股票名稱
+- `added_at` (TIMESTAMP) - 新增時間
+
+### 🔒 安全性
+
+- ✅ SHA256 密碼雜湊加密
+- ✅ SQL 參數化查詢防注入
+- ✅ 會話管理機制
+- ✅ Docker 容器隔離
+
+### 🎯 未來規劃
+
+- [ ] 技術指標分析（MA、RSI、MACD）
+- [ ] 價格提醒功能
+- [ ] 多股票比較視圖
+- [ ] 投資組合追蹤
+- [ ] 匯出報表功能
+
+---
+
+## English
+
+### ✨ Core Features
+
+#### 🎯 Stock Query Functions
+- **Real-time Stock Prices**: Fetch latest stock information via Taiwan Stock Exchange API
+- **Historical Data Analysis**: Monthly historical trading data and trend analysis
+- **Multiple Visualization Charts**:
+  - 📊 **K-Line Chart (Candlestick)**: Display open, high, low, close prices
+  - 📈 **High-Low Line Chart**: Historical price trend lines
+  - One-click chart type switching
+- **📰 Real-time News Integration**: Auto-fetch related stock news from Google News
+
+#### 👥 User System
+- **Account Registration/Login**: Multi-user support with independent user spaces
+- **Personal Favorites**: Save and quickly query favorite stocks
+- **SHA256 Password Encryption**: Ensure account security
+- **Session Management**: Remember login status
+
+#### 👑 Admin Privileges
+- **First User Auto-Promotion**: First registered user automatically becomes admin
+- **Global Favorites View**: Admins can view all users' favorite stocks
+- **User Statistics**: Understand overall system usage
+
+#### 🌐 Multi-Language Support
+- **Chinese/English Toggle**: One-click interface language switching
+- **Complete Bilingual Translation**: All text, buttons, and messages support both languages
+
+#### 🌙 Dark Eye-Care Mode
+- **Dark Theme Design**: Reduce eye fatigue for extended usage
+- **High Contrast Colors**: Ensure clear and readable information
+- **Modern UI**: Smooth animations and gradient effects
+
+### 🚀 Quick Start
+
+#### Method 1: Docker Compose (Recommended)
+
+```bash
+# Clone the repository
+git clone https://github.com/YCHsu661121/PecuniaNexus.git
+cd PecuniaNexus
+
+# Start services
+docker compose up -d
+
+# Access the application
+# Open browser and visit http://localhost:5788
+```
+
+#### Method 2: Local Python Environment
+
+```bash
+# Install dependencies
+pip install -r requirements.txt
+
+# Start application
+python app.py
+
+# Access the application
+# Open browser and visit http://localhost:5788
+```
+
+### 📊 Usage Guide
+
+1. **Register/Login**
+   - Register an account for first-time use (first user becomes admin automatically)
+   - Password must be at least 6 characters
+
+2. **Query Stocks**
+   - Enter stock code in search box (e.g., 2330)
+   - Click popular stock tags for quick queries
+
+3. **Switch Chart Types**
+   - 📊 K-Line Chart: Detailed price movement analysis
+   - 📈 High-Low Line: Simplified trend view
+
+4. **Manage Favorites**
+   - Click "Add to Favorites" after querying a stock
+   - Click "Load My Favorites" to quickly view saved stocks
+
+5. **Switch Language**
+   - Click language button in top-right corner (中文/English)
+
+### 🔥 Popular Stock Codes
+
+- **2330** TSMC (Taiwan Semiconductor)
+- **2317** Hon Hai (Foxconn)
+- **2454** MediaTek
+- **2412** Chunghwa Telecom
+- **2882** Cathay Financial Holdings
+- **2303** United Microelectronics (UMC)
+
+### 🛠️ Technology Stack
+
+#### Backend
+- **Framework**: Python Flask 3.0
+- **Database**: PostgreSQL 16 (Primary) / SQLite 3 (Fallback)
+- **Database Driver**: psycopg 3.1.18
+- **Encryption**: SHA256 password hashing
+- **Data Source**: Taiwan Stock Exchange API + Google News RSS
+
+#### Frontend
+- **Foundation**: HTML5 + CSS3 + JavaScript ES6+
+- **Charts**: ECharts 5.x
+- **Design**: Dark theme + Gradient effects + Responsive layout
+
+#### Deployment
+- **Containerization**: Docker + Docker Compose
+- **Health Check**: PostgreSQL startup dependency management
+- **Data Persistence**: Docker Volume
+
+### 📡 API Endpoints
+
+#### Authentication
+- `POST /api/register` - User registration
+- `POST /api/login` - User login
+
+#### Stock Queries
+- `GET /api/stock/<code>` - Query real-time stock price
+- `GET /api/history/<code>` - Query historical data
+- `GET /api/news/<code>` - Query related news
+
+#### Favorites Management
+- `GET /api/favorites` - Get favorites list
+- `POST /api/favorites` - Add favorite
+- `DELETE /api/favorites/<code>` - Remove favorite
+
+### 🗄️ Database Schema
+
+#### users Table
+- `id` (INTEGER) - User ID
+- `user_id` (TEXT) - User account
+- `password_hash` (TEXT) - SHA256 password hash
+- `is_admin` (INTEGER) - Admin flag
+- `created_at` (TIMESTAMP) - Creation time
+
+#### favorites Table
+- `id` (INTEGER) - Record ID
+- `user_id` (TEXT) - User account
+- `stock_code` (TEXT) - Stock code
+- `stock_name` (TEXT) - Stock name
+- `added_at` (TIMESTAMP) - Added time
+
+### 🔒 Security
+
+- ✅ SHA256 password hash encryption
+- ✅ SQL parameterized queries to prevent injection
+- ✅ Session management mechanism
+- ✅ Docker container isolation
+
+### 🎯 Future Roadmap
+
+- [ ] Technical indicators analysis (MA, RSI, MACD)
+- [ ] Price alert notifications
+- [ ] Multi-stock comparison view
+- [ ] Investment portfolio tracking
+- [ ] Export report functionality
+
+---
+
+## 📄 License
+
+This project is open source and available under the MIT License.
+
+## 🤝 Contributing
+
+Contributions, issues, and feature requests are welcome!
+
+## 📧 Contact
+
+GitHub: [@YCHsu661121](https://github.com/YCHsu661121)

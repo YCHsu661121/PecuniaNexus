@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>台股即時查詢系統</title>
+    <title>AI 智慧選股高手</title>
     <style>
         * {
             margin: 0;
@@ -13,9 +13,10 @@
 
         body {
             font-family: 'Microsoft JhengHei', Arial, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, #1a1a2e 0%, #0f3460 100%);
             min-height: 100vh;
             padding: 20px;
+            color: #e0e0e0;
         }
 
         .container {
@@ -25,22 +26,23 @@
 
         .header {
             text-align: center;
-            color: white;
+            color: #e0e0e0;
             margin-bottom: 30px;
         }
 
         .header h1 {
             font-size: 2.5em;
             margin-bottom: 10px;
-            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
         }
 
         .search-box {
-            background: white;
+            background: #1e1e2e;
             padding: 30px;
             border-radius: 15px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.6);
             margin-bottom: 30px;
+            border: 1px solid #2d2d44;
         }
 
         .search-form {
@@ -59,38 +61,43 @@
             flex: 0 0 220px;
             padding: 10px;
             font-size: 14px;
-            border: 2px solid #ddd;
+            border: 2px solid #3a3a52;
             border-radius: 8px;
             outline: none;
+            background: #1a1a2e;
+            color: #e0e0e0;
         }
 
         .auth-panel {
-            background: white;
+            background: #252538;
             padding: 20px;
             border-radius: 10px;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.4);
             max-width: 400px;
             margin: 0 auto 20px;
+            border: 1px solid #3a3a52;
         }
 
         .auth-panel h3 {
             margin-bottom: 15px;
-            color: #333;
+            color: #c0c0c0;
         }
 
         .auth-input {
             width: 100%;
             padding: 10px;
             margin-bottom: 10px;
-            border: 2px solid #ddd;
+            border: 2px solid #3a3a52;
             border-radius: 6px;
             font-size: 14px;
+            background: #1a1a2e;
+            color: #e0e0e0;
         }
 
         .auth-btn {
             width: 100%;
             padding: 12px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, #4a6fa5 0%, #5a7fc7 100%);
             color: white;
             border: none;
             border-radius: 6px;
@@ -101,11 +108,13 @@
 
         .auth-btn:hover {
             opacity: 0.9;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(90, 127, 199, 0.5);
         }
 
         .admin-badge {
             display: inline-block;
-            background: #e74c3c;
+            background: #e85d75;
             color: white;
             padding: 4px 10px;
             border-radius: 12px;
@@ -118,24 +127,75 @@
             display: none;
         }
 
+        /* Scrollbar for dark mode */
+        ::-webkit-scrollbar {
+            width: 10px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #1a1a2e;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #4a6fa5;
+            border-radius: 5px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #5a7fc7;
+        }
+
+        .lang-switcher {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1000;
+            display: flex;
+            gap: 8px;
+        }
+
+        .lang-btn {
+            padding: 8px 16px;
+            background: #2a2a3e;
+            border: 2px solid #5a7fc7;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.3s;
+            color: #5a7fc7;
+        }
+
+        .lang-btn.active {
+            background: #5a7fc7;
+            color: white;
+        }
+
+        .lang-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(90, 127, 199, 0.5);
+        }
+
         .search-input {
             flex: 1;
             padding: 15px;
             font-size: 16px;
-            border: 2px solid #ddd;
+            border: 2px solid #3a3a52;
             border-radius: 8px;
             outline: none;
             transition: border-color 0.3s;
+            background: #1a1a2e;
+            color: #e0e0e0;
         }
 
         .search-input:focus {
-            border-color: #667eea;
+            border-color: #5a7fc7;
+            box-shadow: 0 0 0 3px rgba(90, 127, 199, 0.3);
         }
 
         .search-btn {
             padding: 15px 30px;
             font-size: 16px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, #4a6fa5 0%, #5a7fc7 100%);
             color: white;
             border: none;
             border-radius: 8px;
@@ -145,6 +205,7 @@
 
         .search-btn:hover {
             transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(90, 127, 199, 0.5);
         }
 
         .popular-stocks {
@@ -155,25 +216,28 @@
 
         .stock-tag {
             padding: 8px 15px;
-            background: #f0f0f0;
+            background: #2a2a3e;
             border-radius: 20px;
             cursor: pointer;
             transition: all 0.3s;
             font-size: 14px;
+            color: #7a9fd7;
+            border: 1px solid #3a3a52;
         }
 
         .stock-tag:hover {
-            background: #667eea;
+            background: #5a7fc7;
             color: white;
             transform: scale(1.05);
         }
 
         .result-box {
-            background: white;
+            background: #1e1e2e;
             padding: 30px;
             border-radius: 15px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.6);
             display: none;
+            border: 1px solid #2d2d44;
         }
 
         .result-box.show {
@@ -201,11 +265,11 @@
 
         .stock-title {
             font-size: 1.8em;
-            color: #333;
+            color: #e0e0e0;
         }
 
         .stock-code {
-            color: #666;
+            color: #999;
             font-size: 0.8em;
         }
 
@@ -218,13 +282,13 @@
 
         .price-card {
             padding: 20px;
-            background: #f8f9fa;
+            background: #2a2a3e;
             border-radius: 10px;
-            border-left: 4px solid #667eea;
+            border-left: 4px solid #5a7fc7;
         }
 
         .price-label {
-            color: #666;
+            color: #999;
             font-size: 0.9em;
             margin-bottom: 5px;
         }
@@ -232,7 +296,7 @@
         .price-value {
             font-size: 1.5em;
             font-weight: bold;
-            color: #333;
+            color: #e0e0e0;
         }
 
         .price-value.up {
@@ -253,31 +317,32 @@
         .history-table td {
             padding: 12px;
             text-align: left;
-            border-bottom: 1px solid #ddd;
+            border-bottom: 1px solid #3a3a52;
+            color: #e0e0e0;
         }
 
         .history-table th {
-            background: #667eea;
+            background: #4a6fa5;
             color: white;
             font-weight: bold;
         }
 
         .history-table tr:hover {
-            background: #f5f5f5;
+            background: #2a2a3e;
         }
 
         .loading {
             text-align: center;
             padding: 40px;
-            color: #666;
+            color: #999;
         }
 
         .error {
             padding: 20px;
-            background: #fee;
-            border-left: 4px solid #e74c3c;
+            background: #3a1f1f;
+            border-left: 4px solid #e85d75;
             border-radius: 5px;
-            color: #c33;
+            color: #ff8a9a;
         }
 
         .update-time {
@@ -291,7 +356,7 @@
             display: flex;
             gap: 10px;
             margin-bottom: 20px;
-            border-bottom: 2px solid #ddd;
+            border-bottom: 2px solid #3a3a52;
         }
 
         .tab {
@@ -300,18 +365,19 @@
             border: none;
             cursor: pointer;
             font-size: 16px;
-            color: #666;
+            color: #999;
             border-bottom: 3px solid transparent;
             transition: all 0.3s;
         }
 
         .tab:hover {
-            color: #667eea;
+            color: #5a7fc7;
         }
 
         .tab.active {
-            color: #667eea;
-            border-bottom-colo show">
+            color: #5a7fc7;
+            border-bottom-color: #5a7fc7;
+        } show">
             <div class="tabs">
                 <button class="tab active" onclick="switchTab('search')">📊 查詢股票</button>
                 <button class="tab" onclick="switchTab('watchlist')">⭐ 關注清單</button>
@@ -830,6 +896,10 @@
     </style>
 </head>
 <body>
+    <div class="lang-switcher">
+        <button class="lang-btn active" onclick="switchLanguage('zh')" id="langZh">中文</button>
+        <button class="lang-btn" onclick="switchLanguage('en')" id="langEn">English</button>
+    </div>
     <div class="container">
         <div class="header">
             <h1>📈 台股即時查詢系統</h1>
@@ -892,16 +962,181 @@
     <script>
         let klineChart = null;
         let currentSession = { userId: null, isAdmin: false };
+        let currentLang = 'zh';
+
+        const i18n = {
+            zh: {
+                // Header
+                systemTitle: '🤖 AI 智慧選股高手',
+                systemDesc: '運用 AI 技術輔助您的投資決策，輸入股票代碼查詢即時資訊與歷史資料',
+                // Auth
+                loginRegister: '🔐 登入 / 註冊',
+                userId: '使用者 ID',
+                password: '密碼（至少6個字元）',
+                login: '🔑 登入',
+                register: '✨ 註冊',
+                logout: '🚪 登出',
+                welcome: '歡迎，',
+                admin: '管理員',
+                // Search
+                stockCodePlaceholder: '請輸入股票代碼（例如：2330）',
+                search: '查詢',
+                popularStocks: '熱門股票：',
+                loadFavorites: '💖 載入我的最愛',
+                // Stock info
+                currentPrice: '目前價格',
+                openPrice: '開盤價',
+                highPrice: '最高價',
+                lowPrice: '最低價',
+                volume: '成交量',
+                addFavorite: '加入最愛',
+                monthlyHistory: '本月歷史資料',
+                updateTime: '更新時間',
+                // Charts
+                klineChart: '📊 K線圖',
+                lineChart: '📈 高低曲線',
+                highLowLine: '歷史高低曲線',
+                highLabel: '最高價',
+                lowLabel: '最低價',
+                closeLabel: '收盤價',
+                // News
+                relatedNews: '📰 相關新聞',
+                loading: '載入中...',
+                noNews: '暫無相關新聞',
+                loadNewsFailed: '載入新聞失敗',
+                // Favorites
+                myFavorites: '我的最愛：',
+                noFavorites: '尚無最愛',
+                adminMode: '👑 管理員模式：所有使用者的最愛',
+                // Messages
+                pleaseLogin: '請先登入',
+                pleaseEnterUserId: '請輸入使用者 ID 與密碼',
+                passwordMinLength: '密碼至少需要 6 個字元',
+                pleaseEnterStockCode: '請輸入股票代碼',
+                addFavSuccess: '已成功添加到最愛',
+                addFavFailed: '加入最愛失敗',
+                loadFavFailed: '讀取最愛失敗',
+                registerSuccess: '註冊成功',
+                registerFailed: '註冊失敗',
+                loginSuccess: '登入成功',
+                loginFailed: '登入失敗'
+            },
+            en: {
+                // Header
+                systemTitle: '🤖 AI Smart Stock Picker',
+                systemDesc: 'AI-powered investment decision assistant. Enter stock code to query real-time information and historical data',
+                // Auth
+                loginRegister: '🔐 Login / Register',
+                userId: 'User ID',
+                password: 'Password (min 6 chars)',
+                login: '🔑 Login',
+                register: '✨ Register',
+                logout: '🚪 Logout',
+                welcome: 'Welcome, ',
+                admin: 'Admin',
+                // Search
+                stockCodePlaceholder: 'Enter stock code (e.g., 2330)',
+                search: 'Search',
+                popularStocks: 'Popular Stocks:',
+                loadFavorites: '💖 Load My Favorites',
+                // Stock info
+                currentPrice: 'Current Price',
+                openPrice: 'Open',
+                highPrice: 'High',
+                lowPrice: 'Low',
+                volume: 'Volume',
+                addFavorite: 'Add to Favorites',
+                monthlyHistory: 'Monthly Historical Data',
+                updateTime: 'Updated',
+                // Charts
+                klineChart: '📊 K-Line',
+                lineChart: '📈 High-Low Line',
+                highLowLine: 'Historical High-Low Line',
+                highLabel: 'High',
+                lowLabel: 'Low',
+                closeLabel: 'Close',
+                // News
+                relatedNews: '📰 Related News',
+                loading: 'Loading...',
+                noNews: 'No related news',
+                loadNewsFailed: 'Failed to load news',
+                // Favorites
+                myFavorites: 'My Favorites:',
+                noFavorites: 'No favorites yet',
+                adminMode: '👑 Admin Mode: All Users\' Favorites',
+                // Messages
+                pleaseLogin: 'Please login first',
+                pleaseEnterUserId: 'Please enter user ID and password',
+                passwordMinLength: 'Password must be at least 6 characters',
+                pleaseEnterStockCode: 'Please enter stock code',
+                addFavSuccess: 'Successfully added to favorites',
+                addFavFailed: 'Failed to add to favorites',
+                loadFavFailed: 'Failed to load favorites',
+                registerSuccess: 'Registration successful',
+                registerFailed: 'Registration failed',
+                loginSuccess: 'Login successful',
+                loginFailed: 'Login failed'
+            }
+        };
+
+        function t(key) {
+            return i18n[currentLang][key] || key;
+        }
+
+        function switchLanguage(lang) {
+            currentLang = lang;
+            document.getElementById('langZh').classList.toggle('active', lang === 'zh');
+            document.getElementById('langEn').classList.toggle('active', lang === 'en');
+            updateUILanguage();
+        }
+
+        function updateUILanguage() {
+            // Header
+            document.querySelector('.header h1').textContent = t('systemTitle');
+            document.querySelector('.header p').textContent = t('systemDesc');
+            
+            // Auth panel
+            const authTitle = document.querySelector('#authPanel h3');
+            if (authTitle) authTitle.textContent = t('loginRegister');
+            document.getElementById('authUserId').placeholder = t('userId');
+            document.getElementById('authPassword').placeholder = t('password');
+            document.querySelectorAll('#authPanel .auth-btn')[0].textContent = t('login');
+            document.querySelectorAll('#authPanel .auth-btn')[1].textContent = t('register');
+            
+            // Main panel
+            const adminBadge = document.getElementById('adminBadge');
+            if (adminBadge && !adminBadge.classList.contains('hidden')) {
+                adminBadge.textContent = t('admin');
+            }
+            const loadFavBtn = document.querySelector('#mainPanel .search-btn');
+            if (loadFavBtn) loadFavBtn.textContent = t('loadFavorites');
+            const logoutBtn = document.querySelectorAll('#mainPanel .search-btn')[1];
+            if (logoutBtn) logoutBtn.textContent = t('logout');
+            
+            // Search
+            document.getElementById('stockInput').placeholder = t('stockCodePlaceholder');
+            document.querySelector('.search-form .search-btn').textContent = t('search');
+            document.querySelector('.popular-stocks span').textContent = t('popularStocks');
+            
+            // Chart buttons
+            const chartBtns = document.querySelectorAll('.chart-btn');
+            if (chartBtns[0]) chartBtns[0].textContent = t('klineChart');
+            if (chartBtns[1]) chartBtns[1].textContent = t('lineChart');
+            
+            // News panel
+            const newsTitle = document.querySelector('#newsPanel h3');
+            if (newsTitle) newsTitle.textContent = t('relatedNews');
+        }
 
         async function handleRegister() {
             const userId = document.getElementById('authUserId').value.trim();
             const password = document.getElementById('authPassword').value.trim();
             if (!userId || !password) {
-                alert('請輸入使用者 ID 與密碼');
+                alert(t('pleaseEnterUserId'));
                 return;
             }
             if (password.length < 6) {
-                alert('密碼至少需要 6 個字元');
+                alert(t('passwordMinLength'));
                 return;
             }
             try {
@@ -925,7 +1160,7 @@
             const userId = document.getElementById('authUserId').value.trim();
             const password = document.getElementById('authPassword').value.trim();
             if (!userId || !password) {
-                alert('請輸入使用者 ID 與密碼');
+                alert(t('pleaseEnterUserId'));
                 return;
             }
             try {
@@ -972,7 +1207,7 @@
         async function searchStock() {
             const stockCode = document.getElementById('stockInput').value.trim();
             if (!stockCode) {
-                alert('請輸入股票代碼');
+                alert(t('pleaseEnterStockCode'));
                 return;
             }
 
@@ -1131,7 +1366,7 @@
 
         async function addToFavorites(stockCode, stockName) {
             if (!currentSession.userId) {
-                alert('請先登入');
+                alert(t('pleaseLogin'));
                 return;
             }
             try {
@@ -1150,7 +1385,7 @@
 
         async function loadMyFavorites() {
             if (!currentSession.userId) {
-                alert('請先登入');
+                alert(t('pleaseLogin'));
                 return;
             }
             try {
