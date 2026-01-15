@@ -99,6 +99,14 @@ def get_stock_info(stock_code):
             }
         else:
             return {
+                'success': False,
+                'message': '查無此股票代碼'
+            }
+    except Exception as e:
+        return {
+            'success': False,
+            'message': f'錯誤: {str(e)}'
+        }
 @app.route('/api/watchlist', methods=['GET'])
 def get_watchlist():
     """
@@ -243,14 +251,6 @@ def get_categories():
     ]
     return jsonify({'success': True, 'data': categories})
 
-                'success': False,
-                'message': '查無此股票代碼'
-            }
-    except Exception as e:
-        return {
-            'success': False,
-            'message': f'錯誤: {str(e)}'
-        }
 
 @app.route('/')
 def index():
