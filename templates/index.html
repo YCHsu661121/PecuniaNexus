@@ -31,9 +31,15 @@
         }
 
         .header h1 {
-            font-size: 2.5em;
+            font-size: 2.2em;
             margin-bottom: 10px;
             text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+        }
+
+        .app-version {
+            font-size: 0.8em;
+            color: #999;
+            margin-top: 5px;
         }
 
         .search-box {
@@ -264,13 +270,13 @@
         }
 
         .stock-title {
-            font-size: 1.8em;
+            font-size: 1.5em;
             color: #e0e0e0;
         }
 
         .stock-code {
             color: #999;
-            font-size: 0.8em;
+            font-size: 0.75em;
         }
 
         .price-info {
@@ -289,12 +295,12 @@
 
         .price-label {
             color: #999;
-            font-size: 0.9em;
+            font-size: 0.8em;
             margin-bottom: 5px;
         }
 
         .price-value {
-            font-size: 1.5em;
+            font-size: 1.3em;
             font-weight: bold;
             color: #e0e0e0;
         }
@@ -315,10 +321,11 @@
 
         .history-table th,
         .history-table td {
-            padding: 12px;
+            padding: 10px;
             text-align: left;
             border-bottom: 1px solid #3a3a52;
             color: #e0e0e0;
+            font-size: 0.85em;
         }
 
         .history-table th {
@@ -348,7 +355,7 @@
         .update-time {
             text-align: right;
             color: #999;
-            font-size: 0.9em;
+            font-size: 0.85em;
             margin-top: 20px;
         }
 
@@ -1062,6 +1069,7 @@
     <div class="container">
         <div class="header">
             <h1>📈 台股即時查詢系統</h1>
+            <div class="app-version">📅 最後更新: 2026-01-16 | AI 智慧選股高手</div>
             <p>輸入股票代碼查詢即時資訊與歷史資料</p>
         </div>
 
@@ -1475,7 +1483,29 @@
                 </div>
             `;
 
-            // 價格資訊
+            // 先顯示圖表區域（與表格交換位置）
+            html += '</div>'; // 結束 stock-info
+
+            document.getElementById('resultContent').innerHTML = html;
+
+            // 立即顯示圖表容器並初始化
+            const chartContainer = document.getElementById('chartAndNewsContainer');
+            chartContainer.style.display = 'block';
+            
+            // 載入新聞
+            loadStockNews(infoData.stock_code);
+
+            // 繪製 K 線圖
+            if (historyData.success && historyData.data && historyData.data.length > 0) {
+                window.currentHistoryData = historyData;
+                // 延遲確保容器已經顯示
+                setTimeout(() => {
+                    renderKline(historyData);
+                }, 100);
+            }
+
+            // 價格資訊和表格添加到下方
+            html = '<div class="stock-info" style="margin-top: 20px;">';
             const priceChangeClass = parseFloat(infoData.current_price) >= parseFloat(infoData.change) ? 'up' : 'down';
             html += `
                 <div class="price-info">
@@ -1527,19 +1557,7 @@
             html += `<div class="update-time">更新時間: ${infoData.time || new Date().toLocaleString('zh-TW')}</div>`;
             html += '</div>';
 
-            document.getElementById('resultContent').innerHTML = html;
-
-            // 顯示圖表控制與新聞面板
-            document.getElementById('chartAndNewsContainer').style.display = 'block';
-
-            // 載入新聞
-            loadStockNews(infoData.stock_code);
-
-            // 繪製 K 線圖（若有歷史資料）
-            if (historyData.success && historyData.data && historyData.data.length > 0) {
-                window.currentHistoryData = historyData; // 保存資料供切換圖表用
-                renderKline(historyData);
-            }
+            document.getElementById('resultContent').innerHTML += html;
         }
 
         let currentChartType = 'kline';
@@ -2253,6 +2271,45 @@
             if (e.key === 'Enter') {
                 searchStock();
             }
+        });
+
+        // 頁面載入時自動查詢最愛第一個
+        window.addEventListener('load', function() {
+            setTimeout(async () => {
+                if (currentSession.userId) {
+                    try {
+                        const response = await fetch('/api/favorites');
+                        const data = await response.json();
+                        if (data.success && data.data && data.data.length > 0) {
+                            const firstFavorite = data.data[0];
+                            document.getElementById('stockInput').value = firstFavorite.stock_code;
+                            searchStock();
+                        }
+                    } catch (error) {
+                        console.log('無最愛股票');
+                    }
+                }
+            }, 800);
+        });
+
+        // 頁面載入時自動查詢最愛列表第一個股票
+        window.addEventListener('DOMContentLoaded', async function() {
+            // 等待登入狀態載入
+            setTimeout(async () => {
+                if (currentSession.userId) {
+                    try {
+                        const response = await fetch('/api/favorites');
+                        const data = await response.json();
+                        if (data.success && data.data && data.data.length > 0) {
+                            const firstFavorite = data.data[0];
+                            document.getElementById('stockInput').value = firstFavorite.stock_code;
+                            searchStock();
+                        }
+                    } catch (error) {
+                        console.error('自動載入最愛失敗:', error);
+                    }
+                }
+            }, 500);
         });
     </script>
 </body>
