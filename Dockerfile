@@ -15,17 +15,19 @@ RUN apt-get update && apt-get install -y \
     && make \
     && make install \
     && cd .. \
-    && rm -rf ta-lib ta-lib-0.4.0-src.tar.gz \
-    && apt-get remove -y wget build-essential \
-    && apt-get autoremove -y \
-    && apt-get clean \
-    && rm -rf /var/lib/apt/lists/*
+    && rm -rf ta-lib ta-lib-0.4.0-src.tar.gz
 
 # 複製需求檔案
 COPY requirements.txt .
 
-# 安裝 Python 依賴套件
+# 安裝 Python 依賴套件（需要在 build-essential 還在時安裝 TA-Lib）
 RUN pip install --no-cache-dir -r requirements.txt
+
+# 清理編譯工具以減小映像大小
+RUN apt-get remove -y wget build-essential \
+    && apt-get autoremove -y \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
 
 # 複製應用程式檔案
 COPY . .
