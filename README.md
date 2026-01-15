@@ -1,13 +1,16 @@
 # 🤖 AI 智慧選股高手 / AI Smart Stock Picker
 
-> 運用 AI 技術輔助您的投資決策，提供台灣股市即時資訊查詢與智能分析
+> 運用 TA-Lib 技術分析與 AI 輔助您的投資決策，提供台灣股市即時資訊查詢與專業技術指標分析
 > 
-> AI-powered investment decision assistant providing real-time Taiwan stock market information and intelligent analysis
+> TA-Lib powered technical analysis and AI-assisted investment decision tool providing real-time Taiwan stock market information and professional technical indicators
 
-[![Python](https://img.shields.io/badge/Python-3.9+-blue.svg)](https://www.python.org/)
+[![Python](https://img.shields.io/badge/Python-3.11-blue.svg)](https://www.python.org/)
 [![Flask](https://img.shields.io/badge/Flask-3.0-green.svg)](https://flask.palletsprojects.com/)
+[![TA-Lib](https://img.shields.io/badge/TA--Lib-0.4.28-orange.svg)](https://ta-lib.org/)
 [![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16-blue.svg)](https://www.postgresql.org/)
 [![Docker](https://img.shields.io/badge/Docker-Compose-blue.svg)](https://www.docker.com/)
+
+📅 **最後更新**: 2026-01-16
 
 ---
 
@@ -25,15 +28,22 @@
 #### 🎯 核心查詢功能
 - **即時股價查詢**：透過台灣證券交易所 API 獲取最新股價資訊
 - **歷史資料分析**：提供每月歷史交易數據與趨勢分析
-- **多重視覺化圖表**：
-  - 📊 **K線圖（蠟燭圖）**：展示開盤、最高、最低、收盤價格
-  - 📈 **高低曲線圖**：歷史高低價格趨勢線
-  - 圖表一鍵切換，靈活查看
+- **TA-Lib 技術指標**：
+  - 📊 **K線圖 + 移動平均線（MA5/10/20/60）**
+  - 📈 **布林通道（Bollinger Bands）**：上中下軌道
+  - 📦 **成交量分析 + VOL MA**：量能趨勢判斷
+  - 📉 **RSI + MACD 指標**：相對強弱與趨勢背離分析
+- **專業技術分析**：
+  - RSI（相對強弱指標）：6日/12日
+  - MACD（移動平均收斂發散）：快線/慢線/柱狀圖
+  - ATR（真實波動幅度）
+  - KD 指標（隨機指標）
 - **📰 即時新聞整合**：自動抓取 Google News 相關股票新聞
 
 #### 👥 使用者系統
 - **帳號註冊/登入**：多用戶支援，每位使用者擁有獨立空間
 - **個人收藏夾**：儲存並快速查詢最愛股票
+- **自動載入最愛**：登入後自動顯示第一支最愛股票
 - **SHA256 密碼加密**：確保帳戶安全性
 - **會話管理**：記住登入狀態
 
@@ -48,6 +58,11 @@
 
 #### 🌙 深色護眼模式
 - **深色主題設計**：降低眼睛疲勞，適合長時間使用
+
+#### ⚡ 自動更新功能
+- **5秒自動刷新**：即時追蹤股價變化
+- **倒數計時顯示**：清楚掌握更新時間
+- **一鍵開關**：彈性控制更新狀態
 - **高對比配色**：確保資訊清晰易讀
 - **現代化 UI**：流暢動畫與漸變效果
 
@@ -137,13 +152,31 @@ python app.py
 
 #### 股票查詢
 - `GET /api/stock/<code>` - 查詢即時股價
-- `GET /api/history/<code>` - 查詢歷史資料
+- `GET /api/stock/history/<code>` - 查詢歷史原始資料
+- `GET /api/stock/indicators/<code>` - 查詢 TA-Lib 技術指標（MA, RSI, MACD, BOLL, KD, ATR）
 - `GET /api/news/<code>` - 查詢相關新聞
 
 #### 收藏管理
 - `GET /api/favorites` - 取得收藏清單
 - `POST /api/favorites` - 新增收藏
 - `DELETE /api/favorites/<code>` - 刪除收藏
+
+### 📊 TA-Lib 技術指標
+
+系統使用 TA-Lib 0.4.28 提供以下專業技術指標：
+
+#### 趨勢指標
+- **SMA（簡單移動平均）**: MA5, MA10, MA20, MA60
+- **MACD（移動平均收斂發散）**: 快線、慢線、柱狀圖
+- **Bollinger Bands（布林通道）**: 上軌、中軌、下軌
+
+#### 動量指標
+- **RSI（相對強弱指標）**: RSI6, RSI12
+- **Stochastic（KD 指標）**: %K, %D
+
+#### 波動率指標
+- **ATR（真實波動幅度均值）**: 14日 ATR
+- **Volume MA（成交量移動平均）**: VOL MA5, VOL MA10
 
 ### 🗄️ 資料庫架構
 
@@ -170,11 +203,12 @@ python app.py
 
 ### 🎯 未來規劃
 
-- [ ] 技術指標分析（MA、RSI、MACD）
+- [x] 技術指標分析（MA、RSI、MACD、BOLL、KD、ATR）✨
 - [ ] 價格提醒功能
 - [ ] 多股票比較視圖
 - [ ] 投資組合追蹤
 - [ ] 匯出報表功能
+- [ ] AI 選股建議
 
 ---
 
