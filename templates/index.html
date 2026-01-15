@@ -1337,8 +1337,11 @@
         }
 
         async function handleRegister() {
+            console.log('[DEBUG] handleRegister called');
             const userId = document.getElementById('authUserId').value.trim();
             const password = document.getElementById('authPassword').value.trim();
+            console.log('[DEBUG] userId:', userId, 'password length:', password.length);
+            
             if (!userId || !password) {
                 alert(t('pleaseEnterUserId'));
                 return;
@@ -1348,41 +1351,50 @@
                 return;
             }
             try {
+                console.log('[DEBUG] Sending register request...');
                 const res = await fetch('/api/register', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ user_id: userId, password: password })
                 });
                 const data = await res.json();
+                console.log('[DEBUG] Register response:', data);
                 if (!data.success) throw new Error(data.message);
                 alert(t('registerSuccess') + (data.is_admin ? ' (Admin)' : ''));
                 // 註冊後自動登入
                 currentSession = { userId: userId, isAdmin: data.is_admin };
                 updateUIAfterLogin();
             } catch (e) {
+                console.error('[ERROR] Register failed:', e);
                 alert(t('registerFailed') + ': ' + e.message);
             }
         }
 
         async function handleLogin() {
+            console.log('[DEBUG] handleLogin called');
             const userId = document.getElementById('authUserId').value.trim();
             const password = document.getElementById('authPassword').value.trim();
+            console.log('[DEBUG] userId:', userId, 'password length:', password.length);
+            
             if (!userId || !password) {
                 alert(t('pleaseEnterUserId'));
                 return;
             }
             try {
+                console.log('[DEBUG] Sending login request...');
                 const res = await fetch('/api/login', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ user_id: userId, password: password })
                 });
                 const data = await res.json();
+                console.log('[DEBUG] Login response:', data);
                 if (!data.success) throw new Error(data.message);
                 currentSession = { userId: data.user_id, isAdmin: data.is_admin };
                 updateUIAfterLogin();
                 alert(t('loginSuccess'));
             } catch (e) {
+                console.error('[ERROR] Login failed:', e);
                 alert(t('loginFailed') + ': ' + e.message);
             }
         }
