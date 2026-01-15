@@ -4,14 +4,13 @@ FROM python:3.11-slim
 # 設定工作目錄
 WORKDIR /app
 
-# 安裝系統依賴和 TA-Lib C 庫
+# 複製需求檔案
+COPY requirements.txt .
+
+# 一次性安裝所有依賴：系統庫 + TA-Lib C 庫 + Python 包
 RUN apt-get update && apt-get install -y \
     wget \
     build-essential \
-    gcc \
-    g++ \
-    make \
-    python3-dev \
     && wget http://prdownloads.sourceforge.net/ta-lib/ta-lib-0.4.0-src.tar.gz \
     && tar -xzf ta-lib-0.4.0-src.tar.gz \
     && cd ta-lib/ \
@@ -20,19 +19,12 @@ RUN apt-get update && apt-get install -y \
     && make install \
     && cd .. \
     && rm -rf ta-lib ta-lib-0.4.0-src.tar.gz \
-    && ldconfig
-
-# 複製需求檔案
-COPY requirements.txt .
-
-# 安裝 Python 依賴套件（需要在 build-essential 還在時安裝 TA-Lib）
-RUN pip install --no-cache-dir --upgrade pip setuptools wheel \
+    && ldconfig \
+    && pip install --no-cache-dir --upgrade pip setuptools wheel \
     && pip install --no-cache-dir numpy==1.26.4 \
     && pip install --no-cache-dir TA-Lib==0.4.28 \
-    && pip install --no-cache-dir Flask==3.0.0 requests==2.31.0 Werkzeug==3.0.1 "psycopg[binary]==3.1.18"
-
-# 清理編譯工具以減小映像大小
-RUN apt-get remove -y wget \
+    && pip install --no-cache-dir Flask==3.0.0 requests==2.31.0 Werkzeug==3.0.1 "psycopg[binary]==3.1.18" \
+    && apt-get remove -y wget \
     && apt-get autoremove -y \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
