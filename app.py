@@ -444,7 +444,81 @@ def index():
 
 @app.route('/test')
 def test_page():
-    return render_template('test_api.html')
+    return '''<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>API 测试</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; max-width: 800px; margin: 0 auto; }
+        .test-section { margin: 20px 0; padding: 15px; border: 1px solid #ddd; border-radius: 5px; }
+        input, button { padding: 10px; margin: 5px; }
+        .result { background: #f5f5f5; padding: 10px; margin-top: 10px; border-radius: 3px; white-space: pre-wrap; }
+        button { background: #4CAF50; color: white; border: none; cursor: pointer; }
+        button:hover { background: #45a049; }
+    </style>
+</head>
+<body>
+    <h1>🧪 登入/註冊 API 測試</h1>
+    
+    <div class="test-section">
+        <h3>註冊測試</h3>
+        <input type="text" id="regUserId" placeholder="使用者 ID" value="testuser">
+        <input type="password" id="regPassword" placeholder="密碼" value="123456">
+        <button onclick="testRegister()">測試註冊</button>
+        <div class="result" id="regResult"></div>
+    </div>
+
+    <div class="test-section">
+        <h3>登入測試</h3>
+        <input type="text" id="loginUserId" placeholder="使用者 ID" value="testuser">
+        <input type="password" id="loginPassword" placeholder="密碼" value="123456">
+        <button onclick="testLogin()">測試登入</button>
+        <div class="result" id="loginResult"></div>
+    </div>
+
+    <script>
+        async function testRegister() {
+            const userId = document.getElementById('regUserId').value;
+            const password = document.getElementById('regPassword').value;
+            const resultDiv = document.getElementById('regResult');
+            
+            try {
+                resultDiv.textContent = '正在註冊...';
+                const res = await fetch('/api/register', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ user_id: userId, password: password })
+                });
+                const data = await res.json();
+                resultDiv.textContent = JSON.stringify(data, null, 2);
+            } catch (e) {
+                resultDiv.textContent = '錯誤: ' + e.message;
+            }
+        }
+
+        async function testLogin() {
+            const userId = document.getElementById('loginUserId').value;
+            const password = document.getElementById('loginPassword').value;
+            const resultDiv = document.getElementById('loginResult');
+            
+            try {
+                resultDiv.textContent = '正在登入...';
+                const res = await fetch('/api/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ user_id: userId, password: password })
+                });
+                const data = await res.json();
+                resultDiv.textContent = JSON.stringify(data, null, 2);
+            } catch (e) {
+                resultDiv.textContent = '錯誤: ' + e.message;
+            }
+        }
+    </script>
+</body>
+</html>'''
 
 @app.route('/api/stock/<stock_code>')
 def get_stock(stock_code):
