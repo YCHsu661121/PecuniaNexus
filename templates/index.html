@@ -844,6 +844,88 @@
             box-shadow: 0 4px 8px rgba(90, 127, 199, 0.5);
         }
 
+        .auto-refresh-control {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin: 15px 0;
+            padding: 12px 20px;
+            background: #2a2a3e;
+            border-radius: 10px;
+            border: 1px solid #3a3a52;
+        }
+
+        .refresh-toggle {
+            position: relative;
+            display: inline-block;
+            width: 50px;
+            height: 26px;
+        }
+
+        .refresh-toggle input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .toggle-slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #555;
+            transition: .4s;
+            border-radius: 26px;
+        }
+
+        .toggle-slider:before {
+            position: absolute;
+            content: "";
+            height: 20px;
+            width: 20px;
+            left: 3px;
+            bottom: 3px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+
+        .refresh-toggle input:checked + .toggle-slider {
+            background-color: #5a7fc7;
+        }
+
+        .refresh-toggle input:checked + .toggle-slider:before {
+            transform: translateX(24px);
+        }
+
+        .refresh-status {
+            color: #c0c0c0;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .refresh-indicator {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #666;
+        }
+
+        .refresh-indicator.active {
+            background: #4ecdc4;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.4; }
+        }
+
         .content-grid {
             display: grid;
             grid-template-columns: 2fr 1fr;
@@ -1018,6 +1100,17 @@
         </div>
 
         <div class="result-box" id="resultBox">
+            <div class="auto-refresh-control" id="autoRefreshControl" style="display:none;">
+                <label class="refresh-toggle">
+                    <input type="checkbox" id="autoRefreshToggle" onchange="toggleAutoRefresh()">
+                    <span class="toggle-slider"></span>
+                </label>
+                <div class="refresh-status">
+                    <span class="refresh-indicator" id="refreshIndicator"></span>
+                    <span id="refreshStatusText">自動更新：關閉</span>
+                    <span id="refreshCountdown" style="color:#999; font-size:12px;"></span>
+                </div>
+            </div>
             <div id="resultContent"></div>
             <div class="chart-controls" id="chartControls" style="display:none;">
                 <button class="chart-btn active" onclick="switchChart('kline')">📊 K線圖</button>
@@ -1043,6 +1136,11 @@
         let klineChart = null;
         let currentSession = { userId: null, isAdmin: false };
         let currentLang = 'zh';
+        let autoRefreshEnabled = false;
+        let autoRefreshInterval = null;
+        let currentStockCode = null;
+        let refreshCountdown = 5;
+        let countdownInterval = null;
 
         const i18n = {
             zh: {
@@ -1086,6 +1184,11 @@
                 loading: '載入中...',
                 noNews: '暫無相關新聞',
                 loadNewsFailed: '載入新聞失敗',
+                // Auto-refresh
+                autoRefreshOn: '自動更新：開啟',
+                autoRefreshOff: '自動更新：關閉',
+                nextUpdate: '下次更新',
+                seconds: '秒',
                 // Favorites
                 myFavorites: '我的最愛：',
                 noFavorites: '尚無最愛',
@@ -1144,6 +1247,11 @@
                 loading: 'Loading...',
                 noNews: 'No related news',
                 loadNewsFailed: 'Failed to load news',
+                // Auto-refresh
+                autoRefreshOn: 'Auto-refresh: ON',
+                autoRefreshOff: 'Auto-refresh: OFF',
+                nextUpdate: 'Next update in',
+                seconds: 's',
                 // Favorites
                 myFavorites: 'My Favorites:',
                 noFavorites: 'No favorites yet',
@@ -1273,6 +1381,13 @@
             document.getElementById('resultBox').classList.remove('show');
             document.getElementById('authUserId').value = '';
             document.getElementById('authPassword').value = '';
+            
+            // 關閉自動更新
+            if (autoRefreshEnabled) {
+                document.getElementById('autoRefreshToggle').checked = false;
+                toggleAutoRefresh();
+            }
+            currentStockCode = null;
         }
 
         function updateUIAfterLogin() {
@@ -1301,6 +1416,7 @@
                 return;
             }
 
+            currentStockCode = stockCode;
             const resultBox = document.getElementById('resultBox');
             const resultContent = document.getElementById('resultContent');
             
@@ -1314,6 +1430,7 @@
 
                 if (!infoData.success) {
                     resultContent.innerHTML = `<div class="error">${infoData.message}</div>`;
+                    document.getElementById('autoRefreshControl').style.display = 'none';
                     return;
                 }
 
@@ -1322,8 +1439,17 @@
                 const historyData = await historyResponse.json();
 
                 displayResult(infoData, historyData);
+                
+                // 顯示自動更新控制
+                document.getElementById('autoRefreshControl').style.display = 'flex';
+                
+                // 如果自動更新已啟用，重置計時器
+                if (autoRefreshEnabled) {
+                    resetRefreshTimer();
+                }
             } catch (error) {
                 resultContent.innerHTML = `<div class="error">發生錯誤: ${error.message}</div>`;
+                document.getElementById('autoRefreshControl').style.display = 'none';
             }
         }
 
@@ -2032,6 +2158,88 @@
                 });
             } catch (e) {
                 console.error('Render MA chart error:', e);
+            }
+        }
+
+        function toggleAutoRefresh() {
+            autoRefreshEnabled = document.getElementById('autoRefreshToggle').checked;
+            const indicator = document.getElementById('refreshIndicator');
+            const statusText = document.getElementById('refreshStatusText');
+            
+            if (autoRefreshEnabled) {
+                indicator.classList.add('active');
+                statusText.textContent = t('autoRefreshOn');
+                resetRefreshTimer();
+            } else {
+                indicator.classList.remove('active');
+                statusText.textContent = t('autoRefreshOff');
+                clearRefreshTimer();
+            }
+        }
+
+        function resetRefreshTimer() {
+            clearRefreshTimer();
+            refreshCountdown = 5;
+            updateCountdownDisplay();
+            
+            // 倍數計時
+            countdownInterval = setInterval(() => {
+                refreshCountdown--;
+                updateCountdownDisplay();
+                
+                if (refreshCountdown <= 0) {
+                    refreshCountdown = 5;
+                }
+            }, 1000);
+            
+            // 主更新計時
+            autoRefreshInterval = setInterval(() => {
+                if (currentStockCode && autoRefreshEnabled) {
+                    refreshStockData();
+                }
+            }, 5000);
+        }
+
+        function clearRefreshTimer() {
+            if (autoRefreshInterval) {
+                clearInterval(autoRefreshInterval);
+                autoRefreshInterval = null;
+            }
+            if (countdownInterval) {
+                clearInterval(countdownInterval);
+                countdownInterval = null;
+            }
+            document.getElementById('refreshCountdown').textContent = '';
+        }
+
+        function updateCountdownDisplay() {
+            const countdownEl = document.getElementById('refreshCountdown');
+            if (autoRefreshEnabled && refreshCountdown > 0) {
+                countdownEl.textContent = `(${t('nextUpdate')} ${refreshCountdown}${t('seconds')})`;
+            } else {
+                countdownEl.textContent = '';
+            }
+        }
+
+        async function refreshStockData() {
+            if (!currentStockCode) return;
+            
+            try {
+                // 静默更新，不顯示 loading
+                const infoResponse = await fetch(`/api/stock/${currentStockCode}`);
+                const infoData = await infoResponse.json();
+
+                if (!infoData.success) return;
+
+                const historyResponse = await fetch(`/api/stock/history/${currentStockCode}`);
+                const historyData = await historyResponse.json();
+
+                displayResult(infoData, historyData);
+                
+                // 重置倍數
+                refreshCountdown = 5;
+            } catch (error) {
+                console.error('自動更新失敗:', error);
             }
         }
 
