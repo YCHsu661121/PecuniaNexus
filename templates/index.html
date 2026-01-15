@@ -64,6 +64,60 @@
             outline: none;
         }
 
+        .auth-panel {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+            max-width: 400px;
+            margin: 0 auto 20px;
+        }
+
+        .auth-panel h3 {
+            margin-bottom: 15px;
+            color: #333;
+        }
+
+        .auth-input {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 10px;
+            border: 2px solid #ddd;
+            border-radius: 6px;
+            font-size: 14px;
+        }
+
+        .auth-btn {
+            width: 100%;
+            padding: 12px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 15px;
+            margin-bottom: 8px;
+        }
+
+        .auth-btn:hover {
+            opacity: 0.9;
+        }
+
+        .admin-badge {
+            display: inline-block;
+            background: #e74c3c;
+            color: white;
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 12px;
+            margin-left: 8px;
+            font-weight: bold;
+        }
+
+        .hidden {
+            display: none;
+        }
+
         .search-input {
             flex: 1;
             padding: 15px;
@@ -693,10 +747,22 @@
             <p>輸入股票代碼查詢即時資訊與歷史資料</p>
         </div>
 
-        <div class="search-box">
+        <div id="authPanel" class="auth-panel">
+            <h3>🔐 登入 / 註冊</h3>
+            <input type="text" class="auth-input" id="authUserId" placeholder="使用者 ID">
+            <input type="password" class="auth-input" id="authPassword" placeholder="密碼（至少6個字元）">
+            <button class="auth-btn" onclick="handleLogin()">🔑 登入</button>
+            <button class="auth-btn" onclick="handleRegister()">✨ 註冊</button>
+        </div>
+
+        <div class="search-box hidden" id="mainPanel">
             <div class="user-form">
-                <input type="text" class="user-input" id="userIdInput" placeholder="輸入使用者 ID（例如：demo）">
-                <button class="search-btn" onclick="loadMyFavorites()">載入我的最愛</button>
+                <div style="flex:1; display:flex; align-items:center;">
+                    <span style="font-weight:bold; color:#333;">歡迎，<span id="currentUser"></span></span>
+                    <span id="adminBadge" class="admin-badge hidden">管理員</span>
+                </div>
+                <button class="search-btn" onclick="loadMyFavorites()">💖 載入我的最愛</button>
+                <button class="search-btn" onclick="handleLogout()">🚪 登出</button>
             </div>
             <div class="search-form">
                 <input type="text" class="search-input" id="stockInput" placeholder="請輸入股票代碼（例如：2330）">
@@ -723,6 +789,78 @@
     <script src="https://cdn.jsdelivr.net/npm/echarts@5/dist/echarts.min.js"></script>
     <script>
         let klineChart = null;
+        let currentSession = { userId: null, isAdmin: false };
+
+        async function handleRegister() {
+            const userId = document.getElementById('authUserId').value.trim();
+            const password = document.getElementById('authPassword').value.trim();
+            if (!userId || !password) {
+                alert('請輸入使用者 ID 與密碼');
+                return;
+            }
+            if (password.length < 6) {
+                alert('密碼至少需要 6 個字元');
+                return;
+            }
+            try {
+                const res = await fetch('/api/register', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ user_id: userId, password: password })
+                });
+                const data = await res.json();
+                if (!data.success) throw new Error(data.message);
+                alert(data.message);
+                // 註冊後自動登入
+                currentSession = { userId: userId, isAdmin: data.is_admin };
+                updateUIAfterLogin();
+            } catch (e) {
+                alert('註冊失敗：' + e.message);
+            }
+        }
+
+        async function handleLogin() {
+            const userId = document.getElementById('authUserId').value.trim();
+            const password = document.getElementById('authPassword').value.trim();
+            if (!userId || !password) {
+                alert('請輸入使用者 ID 與密碼');
+                return;
+            }
+            try {
+                const res = await fetch('/api/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ user_id: userId, password: password })
+                });
+                const data = await res.json();
+                if (!data.success) throw new Error(data.message);
+                currentSession = { userId: data.user_id, isAdmin: data.is_admin };
+                updateUIAfterLogin();
+                alert(data.message);
+            } catch (e) {
+                alert('登入失敗：' + e.message);
+            }
+        }
+
+        function handleLogout() {
+            currentSession = { userId: null, isAdmin: false };
+            document.getElementById('authPanel').classList.remove('hidden');
+            document.getElementById('mainPanel').classList.add('hidden');
+            document.getElementById('resultBox').classList.remove('show');
+            document.getElementById('authUserId').value = '';
+            document.getElementById('authPassword').value = '';
+        }
+
+        function updateUIAfterLogin() {
+            document.getElementById('authPanel').classList.add('hidden');
+            document.getElementById('mainPanel').classList.remove('hidden');
+            document.getElementById('currentUser').textContent = currentSession.userId;
+            if (currentSession.isAdmin) {
+                document.getElementById('adminBadge').classList.remove('hidden');
+            } else {
+                document.getElementById('adminBadge').classList.add('hidden');
+            }
+        }
 
         function quickSearch(stockCode) {
             document.getElementById('stockInput').value = stockCode;
@@ -842,16 +980,15 @@
         }
 
         async function addToFavorites(stockCode, stockName) {
-            const userId = document.getElementById('userIdInput').value.trim();
-            if (!userId) {
-                alert('請先輸入使用者 ID');
+            if (!currentSession.userId) {
+                alert('請先登入');
                 return;
             }
             try {
                 const res = await fetch('/api/favorites', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ user_id: userId, stock_code: stockCode, stock_name: stockName })
+                    body: JSON.stringify({ user_id: currentSession.userId, stock_code: stockCode, stock_name: stockName })
                 });
                 const data = await res.json();
                 if (!data.success) throw new Error(data.message || '加入最愛失敗');
@@ -862,22 +999,45 @@
         }
 
         async function loadMyFavorites() {
-            const userId = document.getElementById('userIdInput').value.trim();
-            if (!userId) {
-                alert('請先輸入使用者 ID');
+            if (!currentSession.userId) {
+                alert('請先登入');
                 return;
             }
             try {
-                const res = await fetch(`/api/favorites?user_id=${encodeURIComponent(userId)}`);
+                const res = await fetch(`/api/favorites?user_id=${encodeURIComponent(currentSession.userId)}`);
                 const data = await res.json();
                 if (!data.success) throw new Error(data.message || '讀取最愛失敗');
                 const listEl = document.getElementById('favoritesList');
-                const items = (data.data || []).map(it => {
-                    const code = it.stock_code || '';
-                    const name = it.stock_name || '';
-                    return `<span class="stock-tag" onclick="quickSearch('${code}')">${code} ${name}</span>`;
-                }).join(' ');
-                listEl.innerHTML = items ? `<div style="margin-top:8px; color:#666;">我的最愛：</div><div style="margin-top:6px; display:flex; flex-wrap:wrap; gap:8px;">${items}</div>` : '<div style="margin-top:8px; color:#999;">尚無最愛</div>';
+                
+                if (data.is_admin) {
+                    // 管理員：按使用者分組顯示
+                    const grouped = {};
+                    (data.data || []).forEach(it => {
+                        const uid = it.user_id || 'unknown';
+                        if (!grouped[uid]) grouped[uid] = [];
+                        grouped[uid].push(it);
+                    });
+                    let html = '<div style="margin-top:8px; color:#666; font-weight:bold;">👑 管理員模式：所有使用者的最愛</div>';
+                    for (const uid in grouped) {
+                        html += `<div style="margin-top:12px; color:#555; font-weight:bold;">👤 ${uid}</div>`;
+                        html += '<div style="display:flex; flex-wrap:wrap; gap:8px; margin-top:6px;">';
+                        grouped[uid].forEach(it => {
+                            const code = it.stock_code || '';
+                            const name = it.stock_name || '';
+                            html += `<span class="stock-tag" onclick="quickSearch('${code}')">${code} ${name}</span>`;
+                        });
+                        html += '</div>';
+                    }
+                    listEl.innerHTML = html;
+                } else {
+                    // 一般使用者
+                    const items = (data.data || []).map(it => {
+                        const code = it.stock_code || '';
+                        const name = it.stock_name || '';
+                        return `<span class="stock-tag" onclick="quickSearch('${code}')">${code} ${name}</span>`;
+                    }).join(' ');
+                    listEl.innerHTML = items ? `<div style="margin-top:8px; color:#666;">我的最愛：</div><div style="margin-top:6px; display:flex; flex-wrap:wrap; gap:8px;">${items}</div>` : '<div style="margin-top:8px; color:#999;">尚無最愛</div>';
+                }
             } catch (e) {
                 alert('讀取最愛失敗：' + e.message);
             }

@@ -5,6 +5,7 @@ import json
 import sqlite3
 from contextlib import closing
 import os
+import hashlib
 
 DB_URL = os.environ.get('DATABASE_URL', '').strip()
 DB_IS_PG = DB_URL.startswith('postgres://') or DB_URL.startswith('postgresql://')
@@ -31,6 +32,30 @@ def get_conn():
         return psycopg.connect(DB_URL)
     else:
         return sqlite3.connect('stocks.db')
+
+
+def hash_password(password: str) -> str:
+    """使用 SHA256 編碼密碼"""
+    return hashlib.sha256(password.encode('utf-8')).hexdigest()
+
+
+def check_user_is_admin(user_id: str) -> bool:
+    """檢查使用者是否為管理員"""
+    try:
+        with closing(get_conn()) as conn:
+            if not DB_IS_PG:
+                conn.row_factory = sqlite3.Row
+            with closing(conn.cursor(row_factory=dict_row) if DB_IS_PG else conn.cursor()) as cursor:
+                cursor.execute(q('SELECT is_admin FROM users WHERE user_id = ?'), (user_id,))
+                row = cursor.fetchone()
+                if not row:
+                    return False
+                if DB_IS_PG:
+                    return row.get('is_admin', False)
+                else:
+                    return bool(row['is_admin'])
+    except Exception:
+        return False
 
 
 def init_db():
@@ -77,6 +102,17 @@ def init_db():
                     CREATE INDEX IF NOT EXISTS idx_fav_user_time ON favorites(user_id, liked_time)
                     """
                 )
+                cursor.execute(
+                    """
+                    CREATE TABLE IF NOT EXISTS users (
+                        id SERIAL PRIMARY KEY,
+                        user_id TEXT NOT NULL UNIQUE,
+                        password_hash TEXT NOT NULL,
+                        is_admin BOOLEAN DEFAULT FALSE,
+                        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                    )
+                    """
+                )
             else:
                 cursor.execute(
                     """
@@ -113,6 +149,17 @@ def init_db():
                 cursor.execute(
                     """
                     CREATE INDEX IF NOT EXISTS idx_fav_user_time ON favorites(user_id, liked_time)
+                    """
+                )
+                cursor.execute(
+                    """
+                    CREATE TABLE IF NOT EXISTS users (
+                        id INTEGER PRIMARY KEY AUTOINCREMENT,
+                        user_id TEXT NOT NULL UNIQUE,
+                        password_hash TEXT NOT NULL,
+                        is_admin INTEGER DEFAULT 0,
+                        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                    )
                     """
                 )
             conn.commit()
@@ -348,6 +395,98 @@ def get_stock_history(stock_code):
     result = get_twse_data(stock_code)
     return jsonify(result)
 
+# User registration and login
+@app.route('/api/register', methods=['POST'])
+def register_user():
+    try:
+        data = request.json or {}
+        user_id = (data.get('user_id') or '').strip()
+        password = (data.get('password') or '').strip()
+        
+        if not user_id or not password:
+            return jsonify({'success': False, 'message': '使用者 ID 與密碼不能為空'})
+        
+        if len(password) < 6:
+            return jsonify({'success': False, 'message': '密碼至少需要 6 個字元'})
+        
+        password_hash = hash_password(password)
+        
+        with closing(get_conn()) as conn:
+            with closing(conn.cursor(row_factory=dict_row) if DB_IS_PG else conn.cursor()) as cursor:
+                # 檢查是否已存在
+                cursor.execute(q('SELECT id FROM users WHERE user_id = ?'), (user_id,))
+                if cursor.fetchone():
+                    return jsonify({'success': False, 'message': '此使用者 ID 已被註冊'})
+                
+                # 檢查是否為第一個使用者（管理員）
+                cursor.execute('SELECT COUNT(*) as cnt FROM users')
+                count_row = cursor.fetchone()
+                is_first_user = False
+                if DB_IS_PG:
+                    is_first_user = (count_row.get('cnt', 0) == 0)
+                else:
+                    is_first_user = (count_row[0] == 0)
+                
+                # 插入新使用者
+                if DB_IS_PG:
+                    cursor.execute(
+                        q('INSERT INTO users (user_id, password_hash, is_admin) VALUES (?, ?, ?)'),
+                        (user_id, password_hash, is_first_user)
+                    )
+                else:
+                    cursor.execute(
+                        q('INSERT INTO users (user_id, password_hash, is_admin) VALUES (?, ?, ?)'),
+                        (user_id, password_hash, 1 if is_first_user else 0)
+                    )
+                conn.commit()
+        
+        return jsonify({
+            'success': True,
+            'is_admin': is_first_user,
+            'message': '註冊成功' + ('（您是管理員）' if is_first_user else '')
+        })
+    except Exception as e:
+        return jsonify({'success': False, 'message': f'註冊失敗: {str(e)}'})
+
+
+@app.route('/api/login', methods=['POST'])
+def login_user():
+    try:
+        data = request.json or {}
+        user_id = (data.get('user_id') or '').strip()
+        password = (data.get('password') or '').strip()
+        
+        if not user_id or not password:
+            return jsonify({'success': False, 'message': '使用者 ID 與密碼不能為空'})
+        
+        password_hash = hash_password(password)
+        
+        with closing(get_conn()) as conn:
+            if not DB_IS_PG:
+                conn.row_factory = sqlite3.Row
+            with closing(conn.cursor(row_factory=dict_row) if DB_IS_PG else conn.cursor()) as cursor:
+                cursor.execute(q('SELECT * FROM users WHERE user_id = ?'), (user_id,))
+                row = cursor.fetchone()
+                
+                if not row:
+                    return jsonify({'success': False, 'message': '使用者不存在'})
+                
+                stored_hash = row['password_hash'] if DB_IS_PG else row['password_hash']
+                if stored_hash != password_hash:
+                    return jsonify({'success': False, 'message': '密碼錯誤'})
+                
+                is_admin = row.get('is_admin', False) if DB_IS_PG else bool(row['is_admin'])
+                
+        return jsonify({
+            'success': True,
+            'user_id': user_id,
+            'is_admin': is_admin,
+            'message': '登入成功'
+        })
+    except Exception as e:
+        return jsonify({'success': False, 'message': f'登入失敗: {str(e)}'})
+
+
 # Favorites APIs (per user)
 @app.route('/api/favorites', methods=['GET'])
 def get_favorites():
@@ -355,15 +494,23 @@ def get_favorites():
         user_id = request.args.get('user_id', '').strip()
         if not user_id:
             return jsonify({'success': False, 'message': '需要 user_id'})
-
+        
+        # 檢查是否為管理員
+        is_admin = check_user_is_admin(user_id)
+        
         with closing(get_conn()) as conn:
             if not DB_IS_PG:
                 conn.row_factory = sqlite3.Row
             with closing(conn.cursor(row_factory=dict_row) if DB_IS_PG else conn.cursor()) as cursor:
-                cursor.execute(q('SELECT * FROM favorites WHERE user_id = ? ORDER BY liked_time DESC'), (user_id,))
+                if is_admin:
+                    # 管理員可查看所有使用者的最愛
+                    cursor.execute('SELECT * FROM favorites ORDER BY user_id, liked_time DESC')
+                else:
+                    # 一般使用者只能看自己的
+                    cursor.execute(q('SELECT * FROM favorites WHERE user_id = ? ORDER BY liked_time DESC'), (user_id,))
                 rows = cursor.fetchall()
                 data = rows if DB_IS_PG else [dict(r) for r in rows]
-        return jsonify({'success': True, 'data': data})
+        return jsonify({'success': True, 'data': data, 'is_admin': is_admin})
     except Exception as e:
         return jsonify({'success': False, 'message': str(e)})
 
