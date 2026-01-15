@@ -2,5 +2,5 @@ Flask==3.0.0
 requests==2.31.0
 Werkzeug==3.0.1
 psycopg[binary]==3.1.18
-numpy==1.26.4
+numpy<2.0
 TA-Lib==0.4.28

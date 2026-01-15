@@ -21,7 +21,7 @@ RUN apt-get update && apt-get install -y \
     && rm -rf ta-lib ta-lib-0.4.0-src.tar.gz \
     && ldconfig \
     && pip install --no-cache-dir --upgrade pip setuptools wheel \
-    && pip install --no-cache-dir numpy==1.26.4 \
+    && pip install --no-cache-dir "numpy<2.0" \
     && pip install --no-cache-dir TA-Lib==0.4.28 \
     && pip install --no-cache-dir Flask==3.0.0 requests==2.31.0 Werkzeug==3.0.1 "psycopg[binary]==3.1.18" \
     && apt-get remove -y wget \
