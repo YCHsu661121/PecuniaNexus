@@ -738,6 +738,95 @@
             background: #fff;
             border-radius: 10px;
         }
+
+        .chart-controls {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+            margin-bottom: 10px;
+        }
+
+        .chart-btn {
+            padding: 10px 20px;
+            background: #f0f0f0;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.3s;
+        }
+
+        .chart-btn.active {
+            background: #667eea;
+            color: white;
+            border-color: #667eea;
+        }
+
+        .chart-btn:hover {
+            transform: translateY(-2px);
+        }
+
+        .content-grid {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        .news-panel {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+            max-height: 500px;
+            overflow-y: auto;
+        }
+
+        .news-panel h3 {
+            margin-bottom: 15px;
+            color: #333;
+            font-size: 1.2em;
+        }
+
+        .news-item {
+            padding: 12px;
+            background: white;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            border-left: 3px solid #667eea;
+            transition: all 0.3s;
+        }
+
+        .news-item:hover {
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            transform: translateX(4px);
+        }
+
+        .news-item a {
+            text-decoration: none;
+            color: #333;
+            font-size: 14px;
+            line-height: 1.5;
+        }
+
+        .news-item a:hover {
+            color: #667eea;
+        }
+
+        .news-date {
+            font-size: 12px;
+            color: #999;
+            margin-top: 4px;
+        }
+
+        .news-source {
+            display: inline-block;
+            font-size: 11px;
+            color: #667eea;
+            background: #e8ecff;
+            padding: 2px 8px;
+            border-radius: 10px;
+            margin-top: 4px;
+        }
     </style>
 </head>
 <body>
@@ -781,6 +870,19 @@
 
         <div class="result-box" id="resultBox">
             <div id="resultContent"></div>
+            <div class="chart-controls" id="chartControls" style="display:none;">
+                <button class="chart-btn active" onclick="switchChart('kline')">📊 K線圖</button>
+                <button class="chart-btn" onclick="switchChart('line')">📈 高低曲線</button>
+            </div>
+            <div class="content-grid" id="contentGrid" style="display:none;">
+                <div>
+                    <div id="kline" class="kline"></div>
+                </div>
+                <div class="news-panel" id="newsPanel">
+                    <h3>📰 相關新聞</h3>
+                    <div id="newsList">載入中...</div>
+                </div>
+            </div>
             <div id="favoritesList" style="margin-top: 16px;"></div>
         </div>
     </div>
@@ -943,9 +1045,6 @@
                 </div>
             `;
 
-            // K 線圖容器
-            html += `<div id="kline" class="kline"></div>`;
-
             // 歷史資料表格
             if (historyData.success && historyData.data && historyData.data.length > 0) {
                 html += '<h3>本月歷史資料</h3>';
@@ -973,9 +1072,60 @@
 
             document.getElementById('resultContent').innerHTML = html;
 
+            // 顯示圖表控制與新聞面板
+            document.getElementById('chartControls').style.display = 'flex';
+            document.getElementById('contentGrid').style.display = 'grid';
+
+            // 載入新聞
+            loadStockNews(infoData.stock_code);
+
             // 繪製 K 線圖（若有歷史資料）
             if (historyData.success && historyData.data && historyData.data.length > 0) {
+                window.currentHistoryData = historyData; // 保存資料供切換圖表用
                 renderKline(historyData);
+            }
+        }
+
+        let currentChartType = 'kline';
+
+        function switchChart(chartType) {
+            currentChartType = chartType;
+            document.querySelectorAll('.chart-btn').forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+            
+            if (!window.currentHistoryData) return;
+            
+            if (chartType === 'kline') {
+                renderKline(window.currentHistoryData);
+            } else {
+                renderLineChart(window.currentHistoryData);
+            }
+        }
+
+        async function loadStockNews(stockCode) {
+            try {
+                document.getElementById('newsList').innerHTML = '載入中...';
+                const res = await fetch(`/api/news/${stockCode}`);
+                const data = await res.json();
+                
+                if (!data.success || !data.data || data.data.length === 0) {
+                    document.getElementById('newsList').innerHTML = '<p style="color:#999;">暫無相關新聞</p>';
+                    return;
+                }
+                
+                let newsHtml = '';
+                data.data.forEach(news => {
+                    newsHtml += `
+                        <div class="news-item">
+                            <a href="${news.link}" target="_blank">${news.title}</a>
+                            <div class="news-date">${news.date}</div>
+                            <span class="news-source">${news.source}</span>
+                        </div>
+                    `;
+                });
+                document.getElementById('newsList').innerHTML = newsHtml;
+            } catch (e) {
+                document.getElementById('newsList').innerHTML = '<p style="color:#e74c3c;">載入新聞失敗</p>';
             }
         }
 
@@ -1124,6 +1274,90 @@
                 });
             } catch (e) {
                 console.error('Render K-line error:', e);
+            }
+        }
+
+        function renderLineChart(historyData) {
+            try {
+                const raw = historyData.data;
+                const rows = raw.slice(-60);
+                const dates = rows.map(r => normalizeDate(r[0]));
+                const highs = rows.map(r => parseNumber(r[4])); // 最高價
+                const lows = rows.map(r => parseNumber(r[5]));  // 最低價
+                const closes = rows.map(r => parseNumber(r[6])); // 收盤價
+
+                const el = document.getElementById('kline');
+                if (!el) return;
+                if (klineChart) {
+                    klineChart.dispose();
+                }
+                klineChart = echarts.init(el);
+
+                const option = {
+                    animation: true,
+                    backgroundColor: '#ffffff',
+                    title: { text: '歷史高低曲線', left: 'center', textStyle: { fontSize: 16, color: '#333' } },
+                    grid: { left: 50, right: 30, top: 50, bottom: 40 },
+                    tooltip: {
+                        trigger: 'axis',
+                        axisPointer: { type: 'cross' }
+                    },
+                    legend: {
+                        data: ['最高價', '最低價', '收盤價'],
+                        top: 25
+                    },
+                    xAxis: {
+                        type: 'category',
+                        data: dates,
+                        boundaryGap: false,
+                        axisLine: { lineStyle: { color: '#888' } },
+                        axisLabel: { color: '#555' }
+                    },
+                    yAxis: {
+                        type: 'value',
+                        scale: true,
+                        axisLine: { lineStyle: { color: '#888' } },
+                        axisLabel: { color: '#555' },
+                        splitLine: { lineStyle: { color: 'rgba(0,0,0,0.08)' } }
+                    },
+                    dataZoom: [
+                        { type: 'inside', start: 40, end: 100 },
+                        { start: 40, end: 100 }
+                    ],
+                    series: [
+                        {
+                            name: '最高價',
+                            type: 'line',
+                            data: highs,
+                            smooth: true,
+                            lineStyle: { color: '#e74c3c', width: 2 },
+                            itemStyle: { color: '#e74c3c' }
+                        },
+                        {
+                            name: '最低價',
+                            type: 'line',
+                            data: lows,
+                            smooth: true,
+                            lineStyle: { color: '#27ae60', width: 2 },
+                            itemStyle: { color: '#27ae60' }
+                        },
+                        {
+                            name: '收盤價',
+                            type: 'line',
+                            data: closes,
+                            smooth: true,
+                            lineStyle: { color: '#667eea', width: 2 },
+                            itemStyle: { color: '#667eea' }
+                        }
+                    ]
+                };
+
+                klineChart.setOption(option);
+                window.addEventListener('resize', () => {
+                    if (klineChart) klineChart.resize();
+                });
+            } catch (e) {
+                console.error('Render line chart error:', e);
             }
         }
 

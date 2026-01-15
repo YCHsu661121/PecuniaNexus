@@ -375,6 +375,57 @@ def get_categories():
     return jsonify({'success': True, 'data': categories})
 
 
+@app.route('/api/news/<stock_code>')
+def get_stock_news(stock_code):
+    """
+    API 端點：獲取股票相關新聞
+    """
+    try:
+        news_list = []
+        
+        # 獲取股票名稱
+        stock_info = get_stock_info(stock_code)
+        stock_name = stock_info.get('stock_name', stock_code) if stock_info.get('success') else stock_code
+        
+        # Google News RSS (台股新聞)
+        search_term = f"{stock_code} {stock_name} 台股"
+        google_news_url = f'https://news.google.com/rss/search?q={search_term}&hl=zh-TW&gl=TW&ceid=TW:zh-Hant'
+        
+        try:
+            response = requests.get(google_news_url, timeout=10)
+            if response.status_code == 200:
+                import xml.etree.ElementTree as ET
+                root = ET.fromstring(response.content)
+                
+                for item in root.findall('.//item')[:10]:  # 取前10則
+                    title = item.find('title')
+                    link = item.find('link')
+                    pub_date = item.find('pubDate')
+                    
+                    if title is not None and link is not None:
+                        news_list.append({
+                            'title': title.text,
+                            'link': link.text,
+                            'date': pub_date.text if pub_date is not None else '',
+                            'source': 'Google News'
+                        })
+        except Exception as e:
+            print(f"Google News fetch error: {e}")
+        
+        # 如果沒有新聞，返回預設訊息
+        if not news_list:
+            news_list.append({
+                'title': f'暫無 {stock_code} {stock_name} 相關新聞',
+                'link': f'https://www.google.com/search?q={stock_code}+{stock_name}+新聞',
+                'date': '',
+                'source': '搜尋建議'
+            })
+        
+        return jsonify({'success': True, 'data': news_list})
+    except Exception as e:
+        return jsonify({'success': False, 'message': f'獲取新聞失敗: {str(e)}'})
+
+
 @app.route('/')
 def index():
     return render_template('index.html')
