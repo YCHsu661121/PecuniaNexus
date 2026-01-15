@@ -17,6 +17,9 @@ except ImportError:
 DB_URL = os.environ.get('DATABASE_URL', '').strip()
 DB_IS_PG = DB_URL.startswith('postgres://') or DB_URL.startswith('postgresql://')
 
+# SQLite 数据库文件路径
+SQLITE_DB_PATH = os.path.join(os.path.dirname(__file__), 'data', 'stocks.db')
+
 if DB_IS_PG:
     try:
         import psycopg
@@ -38,7 +41,9 @@ def get_conn():
     if DB_IS_PG:
         return psycopg.connect(DB_URL)
     else:
-        return sqlite3.connect('stocks.db')
+        # 确保 data 目录存在
+        os.makedirs(os.path.dirname(SQLITE_DB_PATH), exist_ok=True)
+        return sqlite3.connect(SQLITE_DB_PATH)
 
 
 def hash_password(password: str) -> str:
@@ -436,6 +441,10 @@ def get_stock_news(stock_code):
 @app.route('/')
 def index():
     return render_template('index.html')
+
+@app.route('/test')
+def test_page():
+    return render_template('test_api.html')
 
 @app.route('/api/stock/<stock_code>')
 def get_stock(stock_code):
