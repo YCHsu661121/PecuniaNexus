@@ -11,6 +11,11 @@ services:
     volumes:
       - pgdata:/var/lib/postgresql/data
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U app -d pecunia"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
 
   pecunianexus:
     build: .
@@ -22,7 +27,8 @@ services:
       - DATABASE_URL=postgresql://app:appsecret@postgres:5432/pecunia
     restart: unless-stopped
     depends_on:
-      - postgres
+      postgres:
+        condition: service_healthy
     volumes:
       - .:/app
       - stock-data:/app/data
