@@ -1077,8 +1077,8 @@
             <h3>🔐 登入 / 註冊</h3>
             <input type="text" class="auth-input" id="authUserId" placeholder="使用者 ID">
             <input type="password" class="auth-input" id="authPassword" placeholder="密碼（至少6個字元）">
-            <button class="auth-btn" onclick="handleLogin()">🔑 登入</button>
-            <button class="auth-btn" onclick="handleRegister()">✨ 註冊</button>
+            <button class="auth-btn" id="loginBtn">🔑 登入</button>
+            <button class="auth-btn" id="registerBtn">✨ 註冊</button>
         </div>
 
         <div class="search-box hidden" id="mainPanel">
@@ -2404,6 +2404,28 @@
                     }
                 }
             }, 800);
+        });
+
+        // 添加登入/註冊按鈕事件監聽器
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('[INIT] Adding event listeners to login/register buttons');
+            
+            const loginBtn = document.getElementById('loginBtn');
+            const registerBtn = document.getElementById('registerBtn');
+            
+            if (loginBtn) {
+                loginBtn.addEventListener('click', handleLogin);
+                console.log('[INIT] Login button listener added');
+            } else {
+                console.error('[INIT] Login button not found!');
+            }
+            
+            if (registerBtn) {
+                registerBtn.addEventListener('click', handleRegister);
+                console.log('[INIT] Register button listener added');
+            } else {
+                console.error('[INIT] Register button not found!');
+            }
         });
 
         // 頁面載入時自動查詢最愛列表第一個股票
