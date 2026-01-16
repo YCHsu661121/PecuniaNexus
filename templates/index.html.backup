@@ -1147,9 +1147,6 @@
     <!-- ECharts CDN -->
     <script src="https://cdn.jsdelivr.net/npm/echarts@5/dist/echarts.min.js"></script>
     <script>
-        // Version: 2026-01-16-v2 - Force browser refresh
-        console.log('Script loaded - version 2026-01-16-v2');
-        
         let klineChart = null;
         let currentSession = { userId: null, isAdmin: false };
         let currentLang = 'zh';
