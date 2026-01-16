@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>AI 智慧選股高手</title>
+    <script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
     <style>
         * {
             margin: 0;
@@ -42,6 +43,82 @@
             margin-top: 5px;
         }
 
+        .auth-panel {
+            background: #252538;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.4);
+            max-width: 400px;
+            margin: 0 auto 20px;
+            border: 1px solid #3a3a52;
+        }
+
+        .auth-panel h2 {
+            margin-bottom: 20px;
+            color: #c0c0c0;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-size: 14px;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #3a3a52;
+            border-radius: 6px;
+            font-size: 14px;
+            background: #1a1a2e;
+            color: #e0e0e0;
+            outline: none;
+        }
+
+        .form-group input:focus {
+            border-color: #5a7fc7;
+            box-shadow: 0 0 0 3px rgba(90, 127, 199, 0.3);
+        }
+
+        .button-group {
+            display: flex;
+            gap: 10px;
+        }
+
+        button {
+            flex: 1;
+            padding: 12px;
+            background: linear-gradient(135deg, #4a6fa5 0%, #5a7fc7 100%);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 15px;
+            font-weight: bold;
+            transition: all 0.3s;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(90, 127, 199, 0.5);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        .main-panel {
+            display: none;
+        }
+
+        .main-panel.show {
+            display: block;
+        }
+
         .search-box {
             background: #1e1e2e;
             padding: 30px;
@@ -51,312 +128,103 @@
             border: 1px solid #2d2d44;
         }
 
+        .user-info {
+            background: #252538;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            border: 1px solid #3a3a52;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .user-info span {
+            font-weight: bold;
+            color: #5a7fc7;
+        }
+
+        .logout-btn {
+            background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
+            padding: 8px 20px;
+            width: auto;
+        }
+
         .search-form {
             display: flex;
             gap: 10px;
             margin-bottom: 20px;
         }
 
-        .user-form {
-            display: flex;
-            gap: 10px;
-            margin-bottom: 10px;
-        }
-
-        .user-input {
-            flex: 0 0 220px;
-            padding: 10px;
-            font-size: 14px;
+        .search-form input {
+            flex: 1;
+            padding: 12px;
             border: 2px solid #3a3a52;
             border-radius: 8px;
-            outline: none;
+            font-size: 14px;
             background: #1a1a2e;
             color: #e0e0e0;
+            outline: none;
         }
 
-        .auth-panel {
+        .search-form input:focus {
+            border-color: #5a7fc7;
+        }
+
+        .search-form button {
+            padding: 12px 30px;
+            white-space: nowrap;
+        }
+
+        .result-panel {
             background: #252538;
             padding: 20px;
-            border-radius: 10px;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.4);
-            max-width: 400px;
-            margin: 0 auto 20px;
+            border-radius: 8px;
             border: 1px solid #3a3a52;
-        }
-
-        .auth-panel h3 {
-            margin-bottom: 15px;
-            color: #c0c0c0;
-        }
-
-        .auth-input {
-            width: 100%;
-            padding: 10px;
-            margin-bottom: 10px;
-            border: 2px solid #3a3a52;
-            border-radius: 6px;
-            font-size: 14px;
-            background: #1a1a2e;
-            color: #e0e0e0;
-        }
-
-        .auth-btn {
-            width: 100%;
-            padding: 12px;
-            background: linear-gradient(135deg, #4a6fa5 0%, #5a7fc7 100%);
-            color: white;
-            border: none;
-            border-radius: 6px;
-            cursor: pointer;
-            font-size: 15px;
-            margin-bottom: 8px;
-        }
-
-        .auth-btn:hover {
-            opacity: 0.9;
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(90, 127, 199, 0.5);
-        }
-
-        .admin-badge {
-            display: inline-block;
-            background: #e85d75;
-            color: white;
-            padding: 4px 10px;
-            border-radius: 12px;
-            font-size: 12px;
-            margin-left: 8px;
-            font-weight: bold;
-        }
-
-        .hidden {
-            display: none;
-        }
-
-        /* Scrollbar for dark mode */
-        ::-webkit-scrollbar {
-            width: 10px;
-        }
-
-        ::-webkit-scrollbar-track {
-            background: #1a1a2e;
-        }
-
-        ::-webkit-scrollbar-thumb {
-            background: #4a6fa5;
-            border-radius: 5px;
-        }
-
-        ::-webkit-scrollbar-thumb:hover {
-            background: #5a7fc7;
-        }
-
-        .lang-switcher {
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            z-index: 1000;
-            display: flex;
-            gap: 8px;
-        }
-
-        .lang-btn {
-            padding: 8px 16px;
-            background: #2a2a3e;
-            border: 2px solid #5a7fc7;
-            border-radius: 8px;
-            cursor: pointer;
-            font-size: 14px;
-            transition: all 0.3s;
-            color: #5a7fc7;
-        }
-
-        .lang-btn.active {
-            background: #5a7fc7;
-            color: white;
-        }
-
-        .lang-btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 8px rgba(90, 127, 199, 0.5);
-        }
-
-        .search-input {
-            flex: 1;
-            padding: 15px;
-            font-size: 16px;
-            border: 2px solid #3a3a52;
-            border-radius: 8px;
-            outline: none;
-            transition: border-color 0.3s;
-            background: #1a1a2e;
-            color: #e0e0e0;
-        }
-
-        .search-input:focus {
-            border-color: #5a7fc7;
-            box-shadow: 0 0 0 3px rgba(90, 127, 199, 0.3);
-        }
-
-        .search-btn {
-            padding: 15px 30px;
-            font-size: 16px;
-            background: linear-gradient(135deg, #4a6fa5 0%, #5a7fc7 100%);
-            color: white;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-            transition: transform 0.2s;
-        }
-
-        .search-btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(90, 127, 199, 0.5);
-        }
-
-        .popular-stocks {
-            display: flex;
-            gap: 10px;
-            flex-wrap: wrap;
-        }
-
-        .stock-tag {
-            padding: 8px 15px;
-            background: #2a2a3e;
-            border-radius: 20px;
-            cursor: pointer;
-            transition: all 0.3s;
-            font-size: 14px;
-            color: #7a9fd7;
-            border: 1px solid #3a3a52;
-        }
-
-        .stock-tag:hover {
-            background: #5a7fc7;
-            color: white;
-            transform: scale(1.05);
-        }
-
-        .result-box {
-            background: #1e1e2e;
-            padding: 30px;
-            border-radius: 15px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.6);
-            display: none;
-            border: 1px solid #2d2d44;
-        }
-
-        .result-box.show {
-            display: block;
-            animation: fadeIn 0.5s;
-        }
-
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(20px); }
-            to { opacity: 1; transform: translateY(0); }
+            margin-top: 20px;
         }
 
         .stock-info {
-            margin-bottom: 30px;
-        }
-
-        .stock-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 20px;
-            padding-bottom: 20px;
-            border-bottom: 2px solid #eee;
-        }
-
-        .stock-title {
-            font-size: 1.5em;
-            color: #e0e0e0;
-        }
-
-        .stock-code {
-            color: #999;
-            font-size: 0.75em;
-        }
-
-        .price-info {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 20px;
-            margin-bottom: 30px;
+            gap: 15px;
+            margin-bottom: 20px;
         }
 
-        .price-card {
-            padding: 20px;
-            background: #2a2a3e;
-            border-radius: 10px;
-            border-left: 4px solid #5a7fc7;
+        .info-item {
+            background: #1a1a2e;
+            padding: 15px;
+            border-radius: 6px;
+            border: 1px solid #3a3a52;
         }
 
-        .price-label {
+        .info-label {
+            font-size: 12px;
             color: #999;
-            font-size: 0.8em;
             margin-bottom: 5px;
         }
 
-        .price-value {
-            font-size: 1.3em;
+        .info-value {
+            font-size: 18px;
             font-weight: bold;
             color: #e0e0e0;
         }
 
-        .price-value.up {
-            color: #e74c3c;
+        .positive {
+            color: #26a69a;
         }
 
-        .price-value.down {
-            color: #27ae60;
+        .negative {
+            color: #ef5350;
         }
 
-        .history-table {
+        .chart-container {
             width: 100%;
-            border-collapse: collapse;
+            height: 400px;
             margin-top: 20px;
-        }
-
-        .history-table th,
-        .history-table td {
-            padding: 10px;
-            text-align: left;
-            border-bottom: 1px solid #3a3a52;
-            color: #e0e0e0;
-            font-size: 0.85em;
-        }
-
-        .history-table th {
-            background: #4a6fa5;
-            color: white;
-            font-weight: bold;
-        }
-
-        .history-table tr:hover {
-            background: #2a2a3e;
-        }
-
-        .loading {
-            text-align: center;
-            padding: 40px;
-            color: #999;
-        }
-
-        .error {
-            padding: 20px;
-            background: #3a1f1f;
-            border-left: 4px solid #e85d75;
-            border-radius: 5px;
-            color: #ff8a9a;
-        }
-
-        .update-time {
-            text-align: right;
-            color: #999;
-            font-size: 0.85em;
-            margin-top: 20px;
+            background: #1a1a2e;
+            border-radius: 8px;
+            border: 1px solid #3a3a52;
         }
 
         .tabs {
@@ -364,64 +232,21 @@
             gap: 10px;
             margin-bottom: 20px;
             border-bottom: 2px solid #3a3a52;
+            padding-bottom: 10px;
         }
 
         .tab {
-            padding: 12px 24px;
-            background: none;
-            border: none;
+            padding: 8px 16px;
+            background: #252538;
+            border: 1px solid #3a3a52;
+            border-radius: 6px 6px 0 0;
             cursor: pointer;
-            font-size: 16px;
-            color: #999;
-            border-bottom: 3px solid transparent;
             transition: all 0.3s;
         }
 
-        .tab:hover {
-            color: #5a7fc7;
-        }
-
         .tab.active {
-            color: #5a7fc7;
-            border-bottom-color: #5a7fc7;
-        } show">
-            <div class="tabs">
-                <button class="tab active" onclick="switchTab('search')">📊 查詢股票</button>
-                <button class="tab" onclick="switchTab('watchlist')">⭐ 關注清單</button>
-                <button class="tab" onclick="switchTab('history')">🕐 查詢歷史</button>
-            </div>
-
-            <div id="searchTab" class="tab-content active">
-                <div id="resultContent"></div>
-            </div>
-
-            <div id="watchlistTab" class="tab-content">
-                <div class="add-form">
-                    <h3 style="margin-bottom: 15px;">➕ 添加股票到關注清單</h3>
-                    <div class="form-group">
-                        <label class="form-label">股票代碼</label>
-                        <input type="text" class="form-input" id="addStockCode" placeholder="例如：2330">
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">產業分類</label>
-                        <select class="form-select" id="addCategory">
-                            <option value="">請選擇分類</option>
-                        </select>
-                    </div>
-                    <button class="btn btn-primary" onclick="addToWatchlist()">添加到關注清單</button>
-                </div>
-
-                <div class="category-filter" id="categoryFilter">
-                    <button class="category-btn active" onclick="filterWatchlist('')">全部</button>
-                </div>
-
-                <div class="watchlist-grid" id="watchlistGrid"></div>
-            </div>
-
-            <div id="historyTab" class="tab-content">
-                <h3 style="margin-bottom: 15px;">最近查詢記錄</h3>
-                <div class="history-list" id="historyList"></div>
-            
+            background: #4a6fa5;
+            border-bottom-color: transparent;
         }
 
         .tab-content {
@@ -432,2020 +257,1027 @@
             display: block;
         }
 
-        .add-form {
-            background: #f8f9fa;
-            padding: 20px;
-            border-radius: 10px;
-            margin-bottom: 20px;
-        }
-
-        .form-group {
-            margin-bottom: 15px;
-        }
-
-        .form-label {
-            display: block;
-            margin-bottom: 5px;
-            color: #333;
-            font-weight: bold;
-        }
-
-        .form-input, .form-select {
-            width: 100%;
-            padding: 10px;
-            border: 2px solid #ddd;
-            border-radius: 5px;
-            font-size: 14px;
-            outline: none;
-        }
-
-        .form-input:focus, .form-select:focus {
-            border-color: #667eea;
-        }
-
-        .btn {
-            padding: 10px 20px;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-            font-size: 14px;
-            transition: all 0.3s;
-        }
-
-        .btn-primary {
-            background: #667eea;
-            color: white;
-        }
-
-        .btn-primary:hover {
-            background: #5568d3;
-        }
-
-        .btn-danger {
-            background: #e74c3c;
-            color: white;
-            padding: 5px 10px;
-            font-size: 12px;
-        }
-
-        .btn-danger:hover {
+        .error {
             background: #c0392b;
+            color: white;
+            padding: 12px;
+            border-radius: 6px;
+            margin-bottom: 15px;
+            display: none;
         }
 
-        .watchlist-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-            gap: 15px;
-            margin-top: 20px;
+        .error.show {
+            display: block;
         }
 
-        .watchlist-card {
-            background: #f8f9fa;
-            padding: 15px;
-            border-radius: 10px;
-            border-left: 4px solid #667eea;
+        .success {
+            background: #27ae60;
+            color: white;
+            padding: 12px;
+            border-radius: 6px;
+            margin-bottom: 15px;
+            display: none;
+        }
+
+        .success.show {
+            display: block;
+        }
+
+        .favorites-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .favorite-item {
+            background: #1a1a2e;
+            padding: 8px 12px;
+            border-radius: 6px;
+            border: 1px solid #3a3a52;
             cursor: pointer;
             transition: all 0.3s;
         }
 
-        .watchlist-card:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        .favorite-item:hover {
+            background: #4a6fa5;
         }
 
-        .watchlist-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: start;
-            margin-bottom: 10px;
+        .tech-indicators {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 10px;
+            margin-top: 15px;
         }
 
-        .watchlist-code {
-            font-size: 1.2em;
+        .indicator-item {
+            background: #1a1a2e;
+            padding: 10px;
+            border-radius: 6px;
+            text-align: center;
+        }
+
+        .indicator-label {
+            font-size: 11px;
+            color: #999;
+            margin-bottom: 3px;
+        }
+
+        .indicator-value {
+            font-size: 14px;
             font-weight: bold;
-            color: #333;
         }
 
-        .watchlist-name {
-            color: #666;
-            font-size: 0.9em;
+        .loading {
+            text-align: center;
+            padding: 20px;
+            color: #999;
         }
 
-        .watchlist-category {
-            display: inline-block;
-            padding: 3px 10px;
-            background: #667eea;
-            color: white;
-            border-radius: 12px;
-            font-size: 0.8em;
-            margin-top: 5px;
+        .main-content {
+            display: grid;
+            grid-template-columns: 1fr 300px;
+            gap: 20px;
         }
 
-        .history-list {
-            max-height: 400px;
-            overflow-y: auto;
+        .left-panel {
+            min-width: 0;
         }
 
-        .history-item {
-            padding: 12px;
-            background: #f8f9fa;
-            border-radius: 8px;
-            margin-bottom: 10px;
+        .right-panel {
+            background: #1e1e2e;
+            padding: 20px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.6);
+            border: 1px solid #2d2d44;
+            height: fit-content;
+            position: sticky;
+            top: 20px;
+        }
+
+        .favorites-panel h3 {
+            margin-bottom: 15px;
+            color: #5a7fc7;
+            font-size: 1.2em;
+        }
+
+        .favorites-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            cursor: pointer;
-            transition: all 0.3s;
+            margin-bottom: 15px;
         }
 
-        .history-item:hover {
-            background: #e9ecef;
-            transform: translateX(5px);
+        .add-favorite-form {
+            display: none;
+            background: #252538;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            border: 1px solid #3a3a52;
         }
 
-        .history-info {
-            flex: 1;
+        .add-favorite-form.show {
+            display: block;
         }
 
-        .history-time {
-            color: #999;
-            font-size: 0.85em;
-        }
-
-        .category-filter {
-            display: flex;
-            gap: 10px;
-            margin-bottom: 20px;
-            flex-wrap: wrap;
-        }
-
-        .category-btn {
-            padding: 8px 16px;
-            background: #f0f0f0;
-            border: 2px solid transparent;
-            border-radius: 20px;
-            cursor: pointer;
+        .add-favorite-form input {
+            width: 100%;
+            padding: 8px;
+            border: 2px solid #3a3a52;
+            border-radius: 6px;
             font-size: 14px;
+            background: #1a1a2e;
+            color: #e0e0e0;
+            outline: none;
+            margin-bottom: 10px;
+        }
+
+        .add-favorite-form button {
+            width: 100%;
+            padding: 8px;
+            font-size: 14px;
+        }
+
+        .favorites-list-panel {
+            max-height: 500px;
+            overflow-y: auto;
+        }
+
+        .favorite-item-panel {
+            background: #252538;
+            padding: 10px;
+            border-radius: 6px;
+            border: 1px solid #3a3a52;
+            margin-bottom: 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
             transition: all 0.3s;
         }
 
-        .category-btn:hover {
-            background: #e0e0e0;
+        .favorite-item-panel:hover {
+            background: #2d2d44;
+            transform: translateX(-2px);
         }
 
-        let currentCategory = '';
+        .favorite-info {
+            flex: 1;
+            cursor: pointer;
+        }
 
-        // 初始化頁面
-        document.addEventListener('DOMContentLoaded', function() {
-            loadCategories();
-            loadWatchlist();
-            loadHistory();
-        });
+        .favorite-code {
+            font-weight: bold;
+            color: #5a7fc7;
+            font-size: 14px;
+        }
 
-        function switchTab(tab) {
-            // 更新 tab 樣式
-            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+        .favorite-name {
+            font-size: 12px;
+            color: #999;
+            margin-top: 2px;
+        }
+
+        .delete-btn {
+            background: #e74c3c;
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+            transition: all 0.3s;
+        }
+
+        .delete-btn:hover {
+            background: #c0392b;
+        }
+
+        .add-btn {
+            background: #27ae60;
+            color: white;
+            border: none;
+            padding: 5px 15px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+            transition: all 0.3s;
+        }
+
+        .add-btn:hover {
+            background: #229954;
+        }
+
+        @media (max-width: 968px) {
+            .main-content {
+                grid-template-columns: 1fr;
+            }
+
+            .right-panel {
+                position: relative;
+                top: 0;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📈 AI 智慧選股高手</h1>
+            <p class="app-version">v3.0 - 技術分析專業版</p>
+        </div>
+
+        <!-- 登入面板 -->
+        <div id="authPanel" class="auth-panel">
+            <h2>🔐 登入 / 註冊</h2>
+            <div class="error" id="authError"></div>
+            <div class="success" id="authSuccess"></div>
             
-            event.target.classList.add('active');
-            document.getElementById(tab + 'Tab').classList.add('active');
+            <div class="form-group">
+                <label>使用者 ID</label>
+                <input type="text" id="userId" placeholder="輸入使用者 ID">
+            </div>
+            
+            <div class="form-group">
+                <label>密碼</label>
+                <input type="password" id="password" placeholder="輸入密碼（至少6個字元）">
+            </div>
+            
+            <div class="button-group">
+                <button id="loginBtn">🔑 登入</button>
+                <button id="registerBtn">✨ 註冊</button>
+            </div>
+        </div>
 
-            // 載入對應資料
-            if (tab === 'watchlist') {
-                loadWatchlist();
-            } else if (tab === 'history') {
-                loadHistory();
+        <!-- 主面板 -->
+        <div id="mainPanel" class="main-panel">
+            <div class="user-info">
+                <p>歡迎，<span id="currentUser"></span> <span id="adminBadge"></span></p>
+                <button class="logout-btn" id="logoutBtn">🚪 登出</button>
+            </div>
+
+            <div class="main-content">
+                <div class="left-panel">
+                    <div class="search-box">
+                        <div class="search-form">
+                            <input type="text" id="stockCode" placeholder="請輸入股票代碼（例如：2330）">
+                            <button id="searchBtn">🔍 查詢</button>
+                        </div>
+                    </div>
+
+                    <div id="resultPanel" class="result-panel" style="display: none;">
+                        <h2 id="stockTitle"></h2>
+                        
+                        <div class="stock-info" id="stockInfo"></div>
+
+                        <div class="tabs">
+                            <div class="tab active" data-tab="kline">K線圖</div>
+                            <div class="tab" data-tab="ma">技術指標</div>
+                            <div class="tab" data-tab="volume">成交量</div>
+                        </div>
+
+                        <div id="kline" class="tab-content active">
+                            <div id="klineChart" class="chart-container"></div>
+                        </div>
+
+                        <div id="ma" class="tab-content">
+                            <div class="tech-indicators" id="techIndicators"></div>
+                            <div id="maChart" class="chart-container"></div>
+                        </div>
+
+                        <div id="volume" class="tab-content">
+                            <div id="volumeChart" class="chart-container"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="right-panel">
+                    <div class="favorites-panel">
+                        <div class="favorites-header">
+                            <h3>⭐ 關注清單</h3>
+                            <button class="add-btn" id="toggleAddBtn">+ 新增</button>
+                        </div>
+
+                        <div class="add-favorite-form" id="addFavoriteForm">
+                            <input type="text" id="newStockCode" placeholder="輸入股票代碼">
+                            <button id="confirmAddBtn">確認新增</button>
+                        </div>
+
+                        <div class="favorites-list-panel" id="favoritesListPanel">
+                            <div class="loading">載入中...</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 當前登入狀態
+        let currentSession = {
+            userId: null,
+            isAdmin: false
+        };
+
+        let currentStockCode = null;
+        let currentStockData = null;
+
+        // 登入
+        async function handleLogin() {
+            const userId = document.getElementById('userId').value.trim();
+            const password = document.getElementById('password').value.trim();
+            const errorDiv = document.getElementById('authError');
+            const successDiv = document.getElementById('authSuccess');
+
+            errorDiv.classList.remove('show');
+            successDiv.classList.remove('show');
+
+            if (!userId || !password) {
+                errorDiv.textContent = '請輸入使用者 ID 和密碼';
+                errorDiv.classList.add('show');
+                return;
+            }
+
+            try {
+                const response = await fetch('/api/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ user_id: userId, password: password })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    currentSession = { userId: data.user_id, isAdmin: data.is_admin };
+                    successDiv.textContent = '登入成功！';
+                    successDiv.classList.add('show');
+                    
+                    setTimeout(() => {
+                        showMainPanel();
+                        loadFavorites();
+                    }, 500);
+                } else {
+                    errorDiv.textContent = data.message || '登入失敗';
+                    errorDiv.classList.add('show');
+                }
+            } catch (error) {
+                errorDiv.textContent = '登入出錯：' + error.message;
+                errorDiv.classList.add('show');
             }
         }
 
-        async function loadCategories() {
+        // 註冊
+        async function handleRegister() {
+            const userId = document.getElementById('userId').value.trim();
+            const password = document.getElementById('password').value.trim();
+            const errorDiv = document.getElementById('authError');
+            const successDiv = document.getElementById('authSuccess');
+
+            errorDiv.classList.remove('show');
+            successDiv.classList.remove('show');
+
+            if (!userId || !password) {
+                errorDiv.textContent = '請輸入使用者 ID 和密碼';
+                errorDiv.classList.add('show');
+                return;
+            }
+
+            if (password.length < 6) {
+                errorDiv.textContent = '密碼至少需要6個字元';
+                errorDiv.classList.add('show');
+                return;
+            }
+
             try {
-                const response = await fetch('/api/categories');
+                const response = await fetch('/api/register', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ user_id: userId, password: password })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    successDiv.textContent = '註冊成功！正在登入...';
+                    successDiv.classList.add('show');
+                    
+                    setTimeout(() => {
+                        currentSession = { userId: data.user_id, isAdmin: data.is_admin };
+                        showMainPanel();
+                        loadFavorites();
+                    }, 500);
+                } else {
+                    errorDiv.textContent = data.message || '註冊失敗';
+                    errorDiv.classList.add('show');
+                }
+            } catch (error) {
+                errorDiv.textContent = '註冊出錯：' + error.message;
+                errorDiv.classList.add('show');
+            }
+        }
+
+        // 登出
+        function handleLogout() {
+            currentSession = { userId: null, isAdmin: false };
+            currentStockCode = null;
+            currentStockData = null;
+            document.getElementById('authPanel').style.display = 'block';
+            document.getElementById('mainPanel').classList.remove('show');
+            document.getElementById('userId').value = '';
+            document.getElementById('password').value = '';
+            document.getElementById('resultPanel').style.display = 'none';
+        }
+
+        // 顯示主面板
+        function showMainPanel() {
+            document.getElementById('authPanel').style.display = 'none';
+            document.getElementById('mainPanel').classList.add('show');
+            document.getElementById('currentUser').textContent = currentSession.userId;
+            if (currentSession.isAdmin) {
+                document.getElementById('adminBadge').textContent = '👑 管理員';
+            }
+        }
+
+        // 查詢股票
+        async function searchStock() {
+            const stockCode = document.getElementById('stockCode').value.trim();
+            
+            if (!stockCode) {
+                alert('請輸入股票代碼');
+                return;
+            }
+
+            currentStockCode = stockCode;
+            
+            try {
+                const response = await fetch(`/api/stock/${stockCode}`);
+                const data = await response.json();
+
+                if (data.success) {
+                    currentStockData = data;
+                    displayStockData(data);
+                    document.getElementById('addFavoriteBtn').style.display = 'block';
+                } else {
+                    alert(data.message || '查詢失敗');
+                }
+            } catch (error) {
+                alert('查詢出錯：' + error.message);
+            }
+        }
+
+        // 顯示股票數據
+        function displayStockData(data) {
+            const resultPanel = document.getElementById('resultPanel');
+            const stockTitle = document.getElementById('stockTitle');
+            const stockInfo = document.getElementById('stockInfo');
+
+            stockTitle.textContent = `${data.stock_code} - ${data.stock_name}`;
+            
+            const changeClass = parseFloat(data.change) >= 0 ? 'positive' : 'negative';
+            
+            stockInfo.innerHTML = `
+                <div class="info-item">
+                    <div class="info-label">現價</div>
+                    <div class="info-value ${changeClass}">${data.current_price}</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">漲跌</div>
+                    <div class="info-value ${changeClass}">${data.change}</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">開盤</div>
+                    <div class="info-value">${data.open}</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">最高</div>
+                    <div class="info-value">${data.high}</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">最低</div>
+                    <div class="info-value">${data.low}</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">成交量</div>
+                    <div class="info-value">${data.volume}</div>
+                </div>
+            `;
+
+            resultPanel.style.display = 'block';
+
+            // 繪製圖表
+            if (data.kline_data && data.kline_data.length > 0) {
+                renderKlineChart(data.kline_data, data.stock_name);
+                renderVolumeChart(data.kline_data, data.stock_name);
+            }
+
+            // 顯示技術指標
+            if (data.technical_indicators) {
+                displayTechnicalIndicators(data.technical_indicators);
+                renderMAChart(data.kline_data, data.technical_indicators, data.stock_name);
+            }
+        }
+
+        // 繪製 K 線圖
+        function renderKlineChart(klineData, stockName) {
+            const chartDom = document.getElementById('klineChart');
+            const myChart = echarts.init(chartDom);
+            
+            const dates = klineData.map(item => item[0]);
+            const candlestickData = klineData.map(item => [item[1], item[4], item[3], item[2]]);
+            
+            const ma5 = calculateMA(5, candlestickData);
+            const ma10 = calculateMA(10, candlestickData);
+            const ma20 = calculateMA(20, candlestickData);
+            
+            const option = {
+                backgroundColor: '#1a1a2e',
+                title: {
+                    text: `${stockName} K線圖`,
+                    left: 'center',
+                    textStyle: { color: '#e0e0e0' }
+                },
+                tooltip: {
+                    trigger: 'axis',
+                    axisPointer: { type: 'cross' },
+                    backgroundColor: 'rgba(50, 50, 50, 0.9)',
+                    borderColor: '#777',
+                    textStyle: { color: '#e0e0e0' }
+                },
+                legend: {
+                    data: ['K線', 'MA5', 'MA10', 'MA20'],
+                    top: 30,
+                    textStyle: { color: '#e0e0e0' }
+                },
+                grid: {
+                    left: '10%',
+                    right: '8%',
+                    top: '20%',
+                    bottom: '15%'
+                },
+                xAxis: {
+                    type: 'category',
+                    data: dates,
+                    scale: true,
+                    boundaryGap: false,
+                    axisLine: { lineStyle: { color: '#8392A5' } },
+                    splitLine: { show: false },
+                    axisLabel: { color: '#e0e0e0' }
+                },
+                yAxis: {
+                    scale: true,
+                    splitArea: { show: true },
+                    axisLabel: { color: '#e0e0e0' },
+                    axisLine: { lineStyle: { color: '#8392A5' } },
+                    splitLine: { lineStyle: { color: '#2d2d44' } }
+                },
+                dataZoom: [
+                    {
+                        type: 'inside',
+                        start: 50,
+                        end: 100
+                    },
+                    {
+                        show: true,
+                        type: 'slider',
+                        top: '90%',
+                        start: 50,
+                        end: 100,
+                        textStyle: { color: '#e0e0e0' }
+                    }
+                ],
+                series: [
+                    {
+                        name: 'K線',
+                        type: 'candlestick',
+                        data: candlestickData,
+                        itemStyle: {
+                            color: '#ef5350',
+                            color0: '#26a69a',
+                            borderColor: '#ef5350',
+                            borderColor0: '#26a69a'
+                        }
+                    },
+                    {
+                        name: 'MA5',
+                        type: 'line',
+                        data: ma5,
+                        smooth: true,
+                        lineStyle: { width: 1, color: '#FFA500' },
+                        showSymbol: false
+                    },
+                    {
+                        name: 'MA10',
+                        type: 'line',
+                        data: ma10,
+                        smooth: true,
+                        lineStyle: { width: 1, color: '#00CED1' },
+                        showSymbol: false
+                    },
+                    {
+                        name: 'MA20',
+                        type: 'line',
+                        data: ma20,
+                        smooth: true,
+                        lineStyle: { width: 1, color: '#9370DB' },
+                        showSymbol: false
+                    }
+                ]
+            };
+            
+            myChart.setOption(option);
+            
+            window.addEventListener('resize', function() {
+                myChart.resize();
+            });
+        }
+
+        // 繪製成交量圖
+        function renderVolumeChart(klineData, stockName) {
+            const chartDom = document.getElementById('volumeChart');
+            const myChart = echarts.init(chartDom);
+            
+            const dates = klineData.map(item => item[0]);
+            const volumes = klineData.map(item => item[5]);
+            const candlestickData = klineData.map(item => [item[1], item[4], item[3], item[2]]);
+            
+            const option = {
+                backgroundColor: '#1a1a2e',
+                title: {
+                    text: `${stockName} 成交量`,
+                    left: 'center',
+                    textStyle: { color: '#e0e0e0' }
+                },
+                tooltip: {
+                    trigger: 'axis',
+                    axisPointer: { type: 'shadow' },
+                    backgroundColor: 'rgba(50, 50, 50, 0.9)',
+                    borderColor: '#777',
+                    textStyle: { color: '#e0e0e0' }
+                },
+                grid: {
+                    left: '10%',
+                    right: '8%',
+                    top: '20%',
+                    bottom: '15%'
+                },
+                xAxis: {
+                    type: 'category',
+                    data: dates,
+                    axisLine: { lineStyle: { color: '#8392A5' } },
+                    axisLabel: { color: '#e0e0e0' }
+                },
+                yAxis: {
+                    type: 'value',
+                    axisLabel: { color: '#e0e0e0' },
+                    axisLine: { lineStyle: { color: '#8392A5' } },
+                    splitLine: { lineStyle: { color: '#2d2d44' } }
+                },
+                dataZoom: [
+                    {
+                        type: 'inside',
+                        start: 50,
+                        end: 100
+                    },
+                    {
+                        show: true,
+                        type: 'slider',
+                        top: '90%',
+                        start: 50,
+                        end: 100,
+                        textStyle: { color: '#e0e0e0' }
+                    }
+                ],
+                series: [
+                    {
+                        name: '成交量',
+                        type: 'bar',
+                        data: volumes,
+                        itemStyle: {
+                            color: function(params) {
+                                const dataIndex = params.dataIndex;
+                                return candlestickData[dataIndex][0] > candlestickData[dataIndex][1] 
+                                    ? '#26a69a' : '#ef5350';
+                            }
+                        }
+                    }
+                ]
+            };
+            
+            myChart.setOption(option);
+            
+            window.addEventListener('resize', function() {
+                myChart.resize();
+            });
+        }
+
+        // 顯示技術指標
+        function displayTechnicalIndicators(indicators) {
+            const techIndicators = document.getElementById('techIndicators');
+            
+            let html = '';
+            
+            if (indicators.RSI) {
+                const rsiClass = indicators.RSI < 30 ? 'positive' : (indicators.RSI > 70 ? 'negative' : '');
+                html += `
+                    <div class="indicator-item">
+                        <div class="indicator-label">RSI (14)</div>
+                        <div class="indicator-value ${rsiClass}">${indicators.RSI.toFixed(2)}</div>
+                    </div>
+                `;
+            }
+            
+            if (indicators.MACD) {
+                const macdClass = indicators.MACD > 0 ? 'positive' : 'negative';
+                html += `
+                    <div class="indicator-item">
+                        <div class="indicator-label">MACD</div>
+                        <div class="indicator-value ${macdClass}">${indicators.MACD.toFixed(2)}</div>
+                    </div>
+                `;
+            }
+            
+            if (indicators.KD_K) {
+                html += `
+                    <div class="indicator-item">
+                        <div class="indicator-label">KD K值</div>
+                        <div class="indicator-value">${indicators.KD_K.toFixed(2)}</div>
+                    </div>
+                `;
+            }
+            
+            if (indicators.KD_D) {
+                html += `
+                    <div class="indicator-item">
+                        <div class="indicator-label">KD D值</div>
+                        <div class="indicator-value">${indicators.KD_D.toFixed(2)}</div>
+                    </div>
+                `;
+            }
+            
+            if (indicators.BB_UPPER) {
+                html += `
+                    <div class="indicator-item">
+                        <div class="indicator-label">布林上軌</div>
+                        <div class="indicator-value">${indicators.BB_UPPER.toFixed(2)}</div>
+                    </div>
+                    <div class="indicator-item">
+                        <div class="indicator-label">布林中軌</div>
+                        <div class="indicator-value">${indicators.BB_MIDDLE.toFixed(2)}</div>
+                    </div>
+                    <div class="indicator-item">
+                        <div class="indicator-label">布林下軌</div>
+                        <div class="indicator-value">${indicators.BB_LOWER.toFixed(2)}</div>
+                    </div>
+                `;
+            }
+            
+            techIndicators.innerHTML = html;
+        }
+
+        // 繪製技術指標圖
+        function renderMAChart(klineData, indicators, stockName) {
+            const chartDom = document.getElementById('maChart');
+            const myChart = echarts.init(chartDom);
+            
+            const dates = klineData.map(item => item[0]);
+            
+            // 這裡可以擴展繪製 MACD、RSI 等指標的圖表
+            // 簡化版本先顯示基本資訊
+            
+            const option = {
+                backgroundColor: '#1a1a2e',
+                title: {
+                    text: `${stockName} 技術指標`,
+                    left: 'center',
+                    textStyle: { color: '#e0e0e0' }
+                },
+                tooltip: {
+                    trigger: 'axis',
+                    backgroundColor: 'rgba(50, 50, 50, 0.9)',
+                    borderColor: '#777',
+                    textStyle: { color: '#e0e0e0' }
+                },
+                legend: {
+                    data: ['RSI'],
+                    top: 30,
+                    textStyle: { color: '#e0e0e0' }
+                },
+                grid: {
+                    left: '10%',
+                    right: '8%',
+                    top: '20%',
+                    bottom: '15%'
+                },
+                xAxis: {
+                    type: 'category',
+                    data: dates,
+                    axisLine: { lineStyle: { color: '#8392A5' } },
+                    axisLabel: { color: '#e0e0e0' }
+                },
+                yAxis: {
+                    type: 'value',
+                    min: 0,
+                    max: 100,
+                    axisLabel: { color: '#e0e0e0' },
+                    axisLine: { lineStyle: { color: '#8392A5' } },
+                    splitLine: { lineStyle: { color: '#2d2d44' } }
+                },
+                dataZoom: [
+                    {
+                        type: 'inside',
+                        start: 50,
+                        end: 100
+                    },
+                    {
+                        show: true,
+                        type: 'slider',
+                        top: '90%',
+                        start: 50,
+                        end: 100,
+                        textStyle: { color: '#e0e0e0' }
+                    }
+                ],
+                series: [
+                    {
+                        name: 'RSI',
+                        type: 'line',
+                        data: Array(dates.length).fill(indicators.RSI || 50),
+                        smooth: true,
+                        lineStyle: { width: 2, color: '#FFA500' }
+                    }
+                ]
+            };
+            
+            myChart.setOption(option);
+            
+            window.addEventListener('resize', function() {
+                myChart.resize();
+            });
+        }
+
+        // 計算移動平均線
+        function calculateMA(dayCount, data) {
+            const result = [];
+            for (let i = 0; i < data.length; i++) {
+                if (i < dayCount - 1) {
+                    result.push('-');
+                    continue;
+                }
+                let sum = 0;
+                for (let j = 0; j < dayCount; j++) {
+                    sum += data[i - j][1];
+                }
+                result.push((sum / dayCount).toFixed(2));
+            }
+            return result;
+        }
+
+        // 載入關注股票
+        async function loadFavorites() {
+            try {
+                const response = await fetch(`/api/favorites?user_id=${currentSession.userId}`);
                 const data = await response.json();
                 
-                if (data.success) {
-                    const select = document.getElementById('addCategory');
-                    const filter = document.getElementById('categoryFilter');
-                    
-                    data.data.forEach(cat => {
-                        // 添加到選擇框
-                        const option = document.createElement('option');
-                        option.value = cat;
-                        option.textContent = cat;
-                        select.appendChild(option);
-                        
-                        // 添加到過濾按鈕
-                        const btn = document.createElement('button');
-                        btn.className = 'category-btn';
-                        btn.textContent = cat;
-                        btn.onclick = () => filterWatchlist(cat);
-                        filter.appendChild(btn);
-                    });
-            // 切換到查詢頁籤
-            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
-            document.querySelectorAll('.tab')[0].classList.add('active');
-            document.getElementById('searchTab').classList.add('active');
-
-            const resultContent = document.getElementById('resultContent');
-            resultContent.innerHTML = '<div class="loading">🔄 載入中...</div>';
-
-            try {
-                // 獲取即時資訊
-                const infoResponse = await fetch(`/api/stock/${stockCode}`);
-                const infoData = await infoResponse.json();
-
-                if (!infoData.success) {
-                    resultContent.innerHTML = `<div class="error">${infoData.message}</div>`;
-                    return;
-                }
-
-                // 儲存查詢歷史
-                saveSearchHistory(stockCode, infoData.stock_name);f (data.success && data.data.length > 0) {
-                    grid.innerHTML = data.data.map(item => `
-                        <div class="watchlist-card" onclick="searchStockById('${item.stock_code}')">
-                            <div class="watchlist-header">
-                                <div>
-                                    <div class="watchlist-code">${item.stock_code}</div>
-                                    <div class="watchlist-name">${item.stock_name || '載入中...'}</div>
-                                    <span class="watchlist-category">${item.category}</span>
-                                </div>
-                                <button class="btn btn-danger" onclick="event.stopPropagation(); deleteFromWatchlist(${item.id})">刪除</button>
+                const favoritesListPanel = document.getElementById('favoritesListPanel');
+                
+                if (data.success && data.favorites && data.favorites.length > 0) {
+                    favoritesListPanel.innerHTML = data.favorites.map(fav => `
+                        <div class="favorite-item-panel">
+                            <div class="favorite-info" onclick="quickSearch('${fav.stock_code}')">
+                                <div class="favorite-code">${fav.stock_code}</div>
+                                <div class="favorite-name">${fav.stock_name || '查詢中...'}</div>
                             </div>
+                            <button class="delete-btn" onclick="deleteFavorite('${fav.stock_code}')">刪除</button>
                         </div>
                     `).join('');
                 } else {
-                    grid.innerHTML = '<p style="text-align: center; color: #999; padding: 40px;">尚無關注股票</p>';
+                    favoritesListPanel.innerHTML = '<div style="text-align: center; color: #999; padding: 20px;">尚無關注股票</div>';
                 }
             } catch (error) {
-                console.error('載入關注清單失敗:', error);
+                console.error('載入關注股票失敗：', error);
+                document.getElementById('favoritesListPanel').innerHTML = '<div style="text-align: center; color: #e74c3c; padding: 20px;">載入失敗</div>';
             }
         }
 
-        function filterWatchlist(category) {
-            currentCategory = category;
-            
-            // 更新按鈕樣式
-            document.querySelectorAll('.category-btn').forEach(btn => {
-                btn.classList.remove('active');
-                if ((category === '' && btn.textContent === '全部') || btn.textContent === category) {
-                    btn.classList.add('active');
-                }
-            });
-            
-            loadWatchlist(category);
+        // 快速查詢
+        function quickSearch(stockCode) {
+            document.getElementById('stockCode').value = stockCode;
+            searchStock();
         }
 
-        async function addToWatchlist() {
-            const stockCode = document.getElementById('addStockCode').value.trim();
-            const category = document.getElementById('addCategory').value;
+        // 切換新增表單
+        function toggleAddForm() {
+            const form = document.getElementById('addFavoriteForm');
+            form.classList.toggle('show');
+            if (form.classList.contains('show')) {
+                document.getElementById('newStockCode').focus();
+            }
+        }
+
+        // 新增關注
+        async function addFavoriteNew() {
+            const stockCode = document.getElementById('newStockCode').value.trim();
             
             if (!stockCode) {
                 alert('請輸入股票代碼');
                 return;
             }
             
-            if (!category) {
-                alert('請選擇產業分類');
-                return;
-            }
-            
             try {
-                const response = await fetch('/api/watchlist', {
+                const response = await fetch('/api/favorites', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ stock_code: stockCode, category: category })
+                    body: JSON.stringify({
+                        user_id: currentSession.userId,
+                        stock_code: stockCode
+                    })
                 });
                 
                 const data = await response.json();
                 
                 if (data.success) {
-                    alert('添加成功！');
-                    document.getElementById('addStockCode').value = '';
-                    document.getElementById('addCategory').value = '';
-                    loadWatchlist(currentCategory);
+                    document.getElementById('newStockCode').value = '';
+                    document.getElementById('addFavoriteForm').classList.remove('show');
+                    loadFavorites();
                 } else {
-                    alert(data.message || '添加失敗');
+                    alert(data.message || '加入關注失敗');
                 }
             } catch (error) {
-                alert('添加失敗: ' + error.message);
+                alert('加入關注出錯：' + error.message);
             }
         }
 
-        async function deleteFromWatchlist(id) {
-            if (!confirm('確定要從關注清單中移除此股票嗎？')) {
+        // 刪除關注
+        async function deleteFavorite(stockCode) {
+            if (!confirm(`確定要刪除 ${stockCode} 嗎？`)) {
                 return;
             }
             
             try {
-                const response = await fetch(`/api/watchlist/${id}`, {
+                const response = await fetch(`/api/favorites/${stockCode}?user_id=${currentSession.userId}`, {
                     method: 'DELETE'
                 });
                 
                 const data = await response.json();
                 
                 if (data.success) {
-                    loadWatchlist(currentCategory);
+                    loadFavorites();
                 } else {
                     alert(data.message || '刪除失敗');
                 }
             } catch (error) {
-                alert('刪除失敗: ' + error.message);
+                alert('刪除出錯：' + error.message);
             }
         }
 
-        async function loadHistory() {
-            try {
-                const response = await fetch('/api/history');
-                const data = await response.json();
-                
-                const list = document.getElementById('historyList');
-                
-                if (data.success && data.data.length > 0) {
-                    list.innerHTML = data.data.map(item => `
-                        <div class="history-item" onclick="searchStockById('${item.stock_code}')">
-                            <div class="history-info">
-                                <div><strong>${item.stock_code}</strong> ${item.stock_name || ''}</div>
-                                <div class="history-time">${new Date(item.search_time).toLocaleString('zh-TW')}</div>
-                            </div>
-                            <span>→</span>
-                        </div>
-                    `).join('');
-                } else {
-                    list.innerHTML = '<p style="text-align: center; color: #999; padding: 40px;">尚無查詢記錄</p>';
-                }
-            } catch (error) {
-                console.error('載入歷史記錄失敗:', error);
-            }
-        }
-
-        async function saveSearchHistory(stockCode, stockName) {
-            try {
-                await fetch('/api/history', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ stock_code: stockCode, stock_name: stockName })
-                });
-            } catch (error) {
-                console.error('儲存歷史記錄失敗:', error);
-            }
-        }
-
-        function searchStockById(stockCode) {
-            document.getElementById('stockInput').value = stockCode;
-            switchTab('search');
-            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-            document.querySelectorAll('.tab')[0].classList.add('active');
-            searchStock();
-        }
-
-        .category-btn.active {
-            background: #667eea;
-            color: white;
-            border-color: #667eea;
-        }
-        .kline {
-            width: 100%;
-            height: 500px;
-            margin-top: 20px;
-            background: #1a1a2e;
-            border-radius: 10px;
-            border: 1px solid #2d2d44;
-        }
-
-        @media (max-width: 768px) {
-            .kline {
-                height: 350px;
-            }
-        }
-
-        .chart-controls {
-            display: flex;
-            gap: 10px;
-            margin-top: 20px;
-            margin-bottom: 10px;
-            justify-content: center;
-            flex-wrap: wrap;
-        }
-
-        #chartAndNewsContainer {
-            width: 100%;
-        }
-
-        .chart-btn {
-            padding: 10px 20px;
-            background: #2a2a3e;
-            border: 2px solid #5a7fc7;
-            border-radius: 8px;
-            cursor: pointer;
-            font-size: 14px;
-            transition: all 0.3s;
-            color: #5a7fc7;
-            font-weight: 600;
-        }
-
-        .chart-btn.active {
-            background: #5a7fc7;
-            color: white;
-            border-color: #5a7fc7;
-        }
-
-        .chart-btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 8px rgba(90, 127, 199, 0.5);
-        }
-
-        .auto-refresh-control {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            margin: 15px 0;
-            padding: 12px 20px;
-            background: #2a2a3e;
-            border-radius: 10px;
-            border: 1px solid #3a3a52;
-        }
-
-        .refresh-toggle {
-            position: relative;
-            display: inline-block;
-            width: 50px;
-            height: 26px;
-        }
-
-        .refresh-toggle input {
-            opacity: 0;
-            width: 0;
-            height: 0;
-        }
-
-        .toggle-slider {
-            position: absolute;
-            cursor: pointer;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background-color: #555;
-            transition: .4s;
-            border-radius: 26px;
-        }
-
-        .toggle-slider:before {
-            position: absolute;
-            content: "";
-            height: 20px;
-            width: 20px;
-            left: 3px;
-            bottom: 3px;
-            background-color: white;
-            transition: .4s;
-            border-radius: 50%;
-        }
-
-        .refresh-toggle input:checked + .toggle-slider {
-            background-color: #5a7fc7;
-        }
-
-        .refresh-toggle input:checked + .toggle-slider:before {
-            transform: translateX(24px);
-        }
-
-        .refresh-status {
-            color: #c0c0c0;
-            font-size: 14px;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .refresh-indicator {
-            display: inline-block;
-            width: 8px;
-            height: 8px;
-            border-radius: 50%;
-            background: #666;
-        }
-
-        .refresh-indicator.active {
-            background: #4ecdc4;
-            animation: pulse 2s infinite;
-        }
-
-        @keyframes pulse {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.4; }
-        }
-
-        .content-grid {
-            display: grid;
-            grid-template-columns: 2fr 1fr;
-            gap: 20px;
-            margin-top: 20px;
-        }
-
-        @media (max-width: 968px) {
-            .content-grid {
-                grid-template-columns: 1fr;
-            }
+        // 切換標籤
+        function switchTab(tabName) {
+            document.querySelectorAll('.tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            document.querySelectorAll('.tab-content').forEach(content => {
+                content.classList.remove('active');
+            });
             
-            .search-form {
-                flex-direction: column;
-            }
-            
-            .price-info {
-                grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-            }
+            document.querySelector(`[data-tab="${tabName}"]`).classList.add('active');
+            document.getElementById(tabName).classList.add('active');
         }
 
-        @media (max-width: 480px) {
-            body {
-                padding: 10px;
-            }
-            
-            .container {
-                max-width: 100%;
-            }
-            
-            .header h1 {
-                font-size: 1.8em;
-            }
-            
-            .lang-switcher {
-                top: 10px;
-                right: 10px;
-            }
-            
-            .price-info {
-                grid-template-columns: 1fr;
-            }
-        }
-
-        .news-panel {
-            background: #2a2a3e;
-            padding: 20px;
-            border-radius: 10px;
-            max-height: 500px;
-            overflow-y: auto;
-            border: 1px solid #3a3a52;
-        }
-
-        @media (max-width: 768px) {
-            .news-panel {
-                max-height: 400px;
-            }
-        }
-
-        .news-panel h3 {
-            margin-bottom: 15px;
-            color: #c0c0c0;
-            font-size: 1.2em;
-        }
-
-        .news-item {
-            padding: 12px;
-            background: #1e1e2e;
-            border-radius: 8px;
-            margin-bottom: 10px;
-            border-left: 3px solid #5a7fc7;
-            transition: all 0.3s;
-        }
-
-        .news-item:hover {
-            transform: translateX(5px);
-            box-shadow: 0 3px 10px rgba(90, 127, 199, 0.3);
-            background: #252538;
-        }
-
-        .news-item a {
-            color: #7a9fd7;
-            text-decoration: none;
-            font-weight: 600;
-        }
-
-        .news-item a:hover {
-            text-decoration: underline;
-            color: #9ab5e7;
-        }
-
-        .news-item:hover {
-            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-            transform: translateX(4px);
-        }
-
-        .news-item a {
-            text-decoration: none;
-            color: #333;
-            font-size: 14px;
-            line-height: 1.5;
-        }
-
-        .news-item a:hover {
-            color: #667eea;
-        }
-
-        .news-date {
-            font-size: 12px;
-            color: #999;
-            margin-top: 4px;
-        }
-
-        .news-source {
-            display: inline-block;
-            font-size: 11px;
-            color: #667eea;
-            background: #e8ecff;
-            padding: 2px 8px;
-            border-radius: 10px;
-            margin-top: 4px;
-        }
-    </style>
-</head>
-<body>
-    <div class="lang-switcher">
-        <button class="lang-btn active" onclick="switchLanguage('zh')" id="langZh">中文</button>
-        <button class="lang-btn" onclick="switchLanguage('en')" id="langEn">English</button>
-    </div>
-    <div class="container">
-        <div class="header">
-            <h1>📈 台股即時查詢系統</h1>
-            <div class="app-version">📅 最後更新: 2026-01-16 | AI 智慧選股高手</div>
-            <p>輸入股票代碼查詢即時資訊與歷史資料</p>
-        </div>
-
-        <div id="authPanel" class="auth-panel">
-            <h3>🔐 登入 / 註冊</h3>
-            <input type="text" class="auth-input" id="authUserId" placeholder="使用者 ID">
-            <input type="password" class="auth-input" id="authPassword" placeholder="密碼（至少6個字元）">
-            <button class="auth-btn" id="loginBtn">🔑 登入</button>
-            <button class="auth-btn" id="registerBtn">✨ 註冊</button>
-        </div>
-
-        <div class="search-box hidden" id="mainPanel">
-            <div class="user-form">
-                <div style="flex:1; display:flex; align-items:center;">
-                    <span style="font-weight:bold; color:#333;">歡迎，<span id="currentUser"></span></span>
-                    <span id="adminBadge" class="admin-badge hidden">管理員</span>
-                </div>
-                <button class="search-btn" onclick="loadMyFavorites()">💖 載入我的最愛</button>
-                <button class="search-btn" onclick="handleLogout()">🚪 登出</button>
-            </div>
-            <div class="search-form">
-                <input type="text" class="search-input" id="stockInput" placeholder="請輸入股票代碼（例如：2330）">
-                <button class="search-btn" onclick="searchStock()">查詢</button>
-            </div>
-            <div class="popular-stocks">
-                <span style="color: #666; margin-right: 10px;">熱門股票：</span>
-                <div class="stock-tag" onclick="quickSearch('2330')">2330 台積電</div>
-                <div class="stock-tag" onclick="quickSearch('2317')">2317 鴻海</div>
-                <div class="stock-tag" onclick="quickSearch('2454')">2454 聯發科</div>
-                <div class="stock-tag" onclick="quickSearch('2412')">2412 中華電</div>
-                <div class="stock-tag" onclick="quickSearch('2882')">2882 國泰金</div>
-                <div class="stock-tag" onclick="quickSearch('2303')">2303 聯電</div>
-            </div>
-        </div>
-
-        <!-- 我的最愛區域 -->
-        <div id="favoritesBox" class="search-box" style="display:none; margin-top: 20px;">
-            <h3 style="color: #e0e0e0; margin-bottom: 15px;">💖 我的最愛股票</h3>
-            <div id="favoritesList"></div>
-        </div>
-
-        <div class="result-box" id="resultBox">
-            <div class="auto-refresh-control" id="autoRefreshControl" style="display:none;">
-                <label class="refresh-toggle">
-                    <input type="checkbox" id="autoRefreshToggle" onchange="toggleAutoRefresh()">
-                    <span class="toggle-slider"></span>
-                </label>
-                <div class="refresh-status">
-                    <span class="refresh-indicator" id="refreshIndicator"></span>
-                    <span id="refreshStatusText">自動更新：關閉</span>
-                    <span id="refreshCountdown" style="color:#999; font-size:12px;"></span>
-                </div>
-            </div>
-            <div id="resultContent"></div>
-            <div id="chartAndNewsContainer" style="display:none;">
-                <div class="chart-controls" id="chartControls">
-                    <button class="chart-btn active" onclick="switchChart('kline')">📊 K線+MA</button>
-                    <button class="chart-btn" onclick="switchChart('line')">📈 布林通道</button>
-                    <button class="chart-btn" onclick="switchChart('volume')">📦 成交量</button>
-                    <button class="chart-btn" onclick="switchChart('ma')">📉 RSI+MACD</button>
-                </div>
-                <div class="content-grid" id="contentGrid">
-                    <div>
-                        <div id="kline" class="kline"></div>
-                    </div>
-                    <div class="news-panel" id="newsPanel">
-                        <h3>📰 相關新聞</h3>
-                        <div id="newsList">載入中...</div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- ECharts CDN -->
-    <script src="https://cdn.jsdelivr.net/npm/echarts@5/dist/echarts.min.js"></script>
-    <script>
-        // Version: 2026-01-16-v2 - Force browser refresh
-        console.log('Script loaded - version 2026-01-16-v2');
-        
-        let klineChart = null;
-        let currentSession = { userId: null, isAdmin: false };
-        let currentLang = 'zh';
-        let autoRefreshEnabled = false;
-        let autoRefreshInterval = null;
-        let currentStockCode = null;
-        let refreshCountdown = 5;
-        let countdownInterval = null;
-
-        const i18n = {
-            zh: {
-                // Header
-                systemTitle: '🤖 AI 智慧選股高手',
-                systemDesc: '運用 AI 技術輔助您的投資決策，輸入股票代碼查詢即時資訊與歷史資料',
-                // Auth
-                loginRegister: '🔐 登入 / 註冊',
-                userId: '使用者 ID',
-                password: '密碼（至少6個字元）',
-                login: '🔑 登入',
-                register: '✨ 註冊',
-                logout: '🚪 登出',
-                welcome: '歡迎，',
-                admin: '管理員',
-                // Search
-                stockCodePlaceholder: '請輸入股票代碼（例如：2330）',
-                search: '查詢',
-                popularStocks: '熱門股票：',
-                loadFavorites: '💖 載入我的最愛',
-                // Stock info
-                currentPrice: '目前價格',
-                openPrice: '開盤價',
-                highPrice: '最高價',
-                lowPrice: '最低價',
-                volume: '成交量',
-                addFavorite: '加入最愛',
-                monthlyHistory: '本月歷史資料',
-                updateTime: '更新時間',
-                // Charts
-                klineChart: '📊 K線圖',
-                lineChart: '📈 高低曲線',
-                volumeChart: '📦 成交量',
-                maChart: '📉 移動平均',
-                highLowLine: '歷史高低曲線',
-                highLabel: '最高價',
-                lowLabel: '最低價',
-                closeLabel: '收盤價',
-                // News
-                relatedNews: '📰 相關新聞',
-                loading: '載入中...',
-                noNews: '暫無相關新聞',
-                loadNewsFailed: '載入新聞失敗',
-                // Auto-refresh
-                autoRefreshOn: '自動更新：開啟',
-                autoRefreshOff: '自動更新：關閉',
-                nextUpdate: '下次更新',
-                seconds: '秒',
-                // Favorites
-                myFavorites: '我的最愛：',
-                noFavorites: '尚無最愛',
-                adminMode: '👑 管理員模式：所有使用者的最愛',
-                // Messages
-                pleaseLogin: '請先登入',
-                pleaseEnterUserId: '請輸入使用者 ID 與密碼',
-                passwordMinLength: '密碼至少需要 6 個字元',
-                pleaseEnterStockCode: '請輸入股票代碼',
-                addFavSuccess: '已成功添加到最愛',
-                addFavFailed: '加入最愛失敗',
-                loadFavFailed: '讀取最愛失敗',
-                registerSuccess: '註冊成功',
-                registerFailed: '註冊失敗',
-                loginSuccess: '登入成功',
-                loginFailed: '登入失敗'
-            },
-            en: {
-                // Header
-                systemTitle: '🤖 AI Smart Stock Picker',
-                systemDesc: 'AI-powered investment decision assistant. Enter stock code to query real-time information and historical data',
-                // Auth
-                loginRegister: '🔐 Login / Register',
-                userId: 'User ID',
-                password: 'Password (min 6 chars)',
-                login: '🔑 Login',
-                register: '✨ Register',
-                logout: '🚪 Logout',
-                welcome: 'Welcome, ',
-                admin: 'Admin',
-                // Search
-                stockCodePlaceholder: 'Enter stock code (e.g., 2330)',
-                search: 'Search',
-                popularStocks: 'Popular Stocks:',
-                loadFavorites: '💖 Load My Favorites',
-                // Stock info
-                currentPrice: 'Current Price',
-                openPrice: 'Open',
-                highPrice: 'High',
-                lowPrice: 'Low',
-                volume: 'Volume',
-                addFavorite: 'Add to Favorites',
-                monthlyHistory: 'Monthly Historical Data',
-                updateTime: 'Updated',
-                // Charts
-                klineChart: '📊 K-Line',
-                lineChart: '📈 High-Low Line',
-                volumeChart: '📦 Volume',
-                maChart: '📉 Moving Avg',
-                highLowLine: 'Historical High-Low Line',
-                highLabel: 'High',
-                lowLabel: 'Low',
-                closeLabel: 'Close',
-                // News
-                relatedNews: '📰 Related News',
-                loading: 'Loading...',
-                noNews: 'No related news',
-                loadNewsFailed: 'Failed to load news',
-                // Auto-refresh
-                autoRefreshOn: 'Auto-refresh: ON',
-                autoRefreshOff: 'Auto-refresh: OFF',
-                nextUpdate: 'Next update in',
-                seconds: 's',
-                // Favorites
-                myFavorites: 'My Favorites:',
-                noFavorites: 'No favorites yet',
-                adminMode: '👑 Admin Mode: All Users\' Favorites',
-                // Messages
-                pleaseLogin: 'Please login first',
-                pleaseEnterUserId: 'Please enter user ID and password',
-                passwordMinLength: 'Password must be at least 6 characters',
-                pleaseEnterStockCode: 'Please enter stock code',
-                addFavSuccess: 'Successfully added to favorites',
-                addFavFailed: 'Failed to add to favorites',
-                loadFavFailed: 'Failed to load favorites',
-                registerSuccess: 'Registration successful',
-                registerFailed: 'Registration failed',
-                loginSuccess: 'Login successful',
-                loginFailed: 'Login failed'
-            }
-        };
-
-        function t(key) {
-            return i18n[currentLang][key] || key;
-        }
-
-        function switchLanguage(lang) {
-            currentLang = lang;
-            document.getElementById('langZh').classList.toggle('active', lang === 'zh');
-            document.getElementById('langEn').classList.toggle('active', lang === 'en');
-            updateUILanguage();
-        }
-
-        function updateUILanguage() {
-            // Header
-            document.querySelector('.header h1').textContent = t('systemTitle');
-            document.querySelector('.header p').textContent = t('systemDesc');
-            
-            // Auth panel
-            const authTitle = document.querySelector('#authPanel h3');
-            if (authTitle) authTitle.textContent = t('loginRegister');
-            document.getElementById('authUserId').placeholder = t('userId');
-            document.getElementById('authPassword').placeholder = t('password');
-            document.querySelectorAll('#authPanel .auth-btn')[0].textContent = t('login');
-            document.querySelectorAll('#authPanel .auth-btn')[1].textContent = t('register');
-            
-            // Main panel
-            const adminBadge = document.getElementById('adminBadge');
-            if (adminBadge && !adminBadge.classList.contains('hidden')) {
-                adminBadge.textContent = t('admin');
-            }
-            const loadFavBtn = document.querySelector('#mainPanel .search-btn');
-            if (loadFavBtn) loadFavBtn.textContent = t('loadFavorites');
-            const logoutBtn = document.querySelectorAll('#mainPanel .search-btn')[1];
-            if (logoutBtn) logoutBtn.textContent = t('logout');
-            
-            // Search
-            document.getElementById('stockInput').placeholder = t('stockCodePlaceholder');
-            document.querySelector('.search-form .search-btn').textContent = t('search');
-            document.querySelector('.popular-stocks span').textContent = t('popularStocks');
-            
-            // Chart buttons
-            const chartBtns = document.querySelectorAll('.chart-btn');
-            if (chartBtns[0]) chartBtns[0].textContent = t('klineChart');
-            if (chartBtns[1]) chartBtns[1].textContent = t('lineChart');
-            if (chartBtns[2]) chartBtns[2].textContent = t('volumeChart');
-            if (chartBtns[3]) chartBtns[3].textContent = t('maChart');
-            
-            // News panel
-            const newsTitle = document.querySelector('#newsPanel h3');
-            if (newsTitle) newsTitle.textContent = t('relatedNews');
-        }
-
-        async function handleRegister() {
-            console.log('[DEBUG] handleRegister called');
-            const userId = document.getElementById('authUserId').value.trim();
-            const password = document.getElementById('authPassword').value.trim();
-            console.log('[DEBUG] userId:', userId, 'password length:', password.length);
-            
-            if (!userId || !password) {
-                alert(t('pleaseEnterUserId'));
-                return;
-            }
-            if (password.length < 6) {
-                alert(t('passwordMinLength'));
-                return;
-            }
-            try {
-                console.log('[DEBUG] Sending register request...');
-                const res = await fetch('/api/register', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ user_id: userId, password: password })
-                });
-                const data = await res.json();
-                console.log('[DEBUG] Register response:', data);
-                if (!data.success) throw new Error(data.message);
-                alert(t('registerSuccess') + (data.is_admin ? ' (Admin)' : ''));
-                // 註冊後自動登入
-                currentSession = { userId: userId, isAdmin: data.is_admin };
-                updateUIAfterLogin();
-            } catch (e) {
-                console.error('[ERROR] Register failed:', e);
-                alert(t('registerFailed') + ': ' + e.message);
-            }
-        }
-
-        async function handleLogin() {
-            console.log('[DEBUG] handleLogin called');
-            const userId = document.getElementById('authUserId').value.trim();
-            const password = document.getElementById('authPassword').value.trim();
-            console.log('[DEBUG] userId:', userId, 'password length:', password.length);
-            
-            if (!userId || !password) {
-                alert(t('pleaseEnterUserId'));
-                return;
-            }
-            try {
-                console.log('[DEBUG] Sending login request...');
-                const res = await fetch('/api/login', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ user_id: userId, password: password })
-                });
-                const data = await res.json();
-                console.log('[DEBUG] Login response:', data);
-                if (!data.success) throw new Error(data.message);
-                currentSession = { userId: data.user_id, isAdmin: data.is_admin };
-                updateUIAfterLogin();
-                alert(t('loginSuccess'));
-            } catch (e) {
-                console.error('[ERROR] Login failed:', e);
-                alert(t('loginFailed') + ': ' + e.message);
-            }
-        }
-
-        function handleLogout() {
-            currentSession = { userId: null, isAdmin: false };
-            document.getElementById('authPanel').classList.remove('hidden');
-            document.getElementById('mainPanel').classList.add('hidden');
-            document.getElementById('favoritesBox').style.display = 'none';
-            document.getElementById('resultBox').classList.remove('show');
-            document.getElementById('authUserId').value = '';
-            document.getElementById('authPassword').value = '';
-            
-            // 關閉自動更新
-            if (autoRefreshEnabled) {
-                document.getElementById('autoRefreshToggle').checked = false;
-                toggleAutoRefresh();
-            }
-            currentStockCode = null;
-        }
-
-        function updateUIAfterLogin() {
-            document.getElementById('authPanel').classList.add('hidden');
-            document.getElementById('mainPanel').classList.remove('hidden');
-            document.getElementById('favoritesBox').style.display = 'block';
-            document.getElementById('currentUser').textContent = currentSession.userId;
-            if (currentSession.isAdmin) {
-                document.getElementById('adminBadge').classList.remove('hidden');
-            } else {
-                document.getElementById('adminBadge').classList.add('hidden');
-            }
-            // 自動載入最愛
-            loadMyFavorites();
-        }
-
-        function quickSearch(stockCode) {
-            document.getElementById('stockInput').value = stockCode;
-            searchStock();
-        }
-
-        async function searchStock() {
-            const stockCode = document.getElementById('stockInput').value.trim();
-            if (!stockCode) {
-                alert(t('pleaseEnterStockCode'));
-                return;
-            }
-
-            currentStockCode = stockCode;
-            const resultBox = document.getElementById('resultBox');
-            const resultContent = document.getElementById('resultContent');
-            
-            resultBox.classList.add('show');
-            resultContent.innerHTML = '<div class="loading">🔄 載入中...</div>';
-
-            try {
-                // 獲取即時資訊
-                const infoResponse = await fetch(`/api/stock/${stockCode}`);
-                const infoData = await infoResponse.json();
-
-                if (!infoData.success) {
-                    resultContent.innerHTML = `<div class="error">${infoData.message}</div>`;
-                    document.getElementById('autoRefreshControl').style.display = 'none';
-                    return;
-                }
-
-                // 使用 TA-Lib 計算的技術指標數據
-                const indicatorsResponse = await fetch(`/api/stock/indicators/${stockCode}`);
-                const indicatorsData = await indicatorsResponse.json();
-
-                displayResult(infoData, indicatorsData);
-                
-                // 顯示自動更新控制
-                document.getElementById('autoRefreshControl').style.display = 'flex';
-                
-                // 如果自動更新已啟用，重置計時器
-                if (autoRefreshEnabled) {
-                    resetRefreshTimer();
-                }
-            } catch (error) {
-                resultContent.innerHTML = `<div class="error">發生錯誤: ${error.message}</div>`;
-                document.getElementById('autoRefreshControl').style.display = 'none';
-            }
-        }
-
-        function displayResult(infoData, historyData) {
-            let html = '<div class="stock-info">';
-            
-            // 股票標題
-            html += `
-                <div class="stock-header">
-                    <div>
-                        <div class="stock-title">${infoData.stock_name}</div>
-                        <div class="stock-code">股票代碼: ${infoData.stock_code}</div>
-                    </div>
-                    <div>
-                        <button class="search-btn" style="padding:10px 16px" onclick="addToFavorites('${infoData.stock_code}', '${infoData.stock_name}')">加入最愛</button>
-                    </div>
-                </div>
-            `;
-
-            // 先顯示圖表區域（與表格交換位置）
-            html += '</div>'; // 結束 stock-info
-
-            document.getElementById('resultContent').innerHTML = html;
-
-            // 立即顯示圖表容器並初始化
-            const chartContainer = document.getElementById('chartAndNewsContainer');
-            chartContainer.style.display = 'block';
-            
-            // 載入新聞
-            loadStockNews(infoData.stock_code);
-
-            // 繪製 K 線圖
-            if (historyData.success && historyData.data && historyData.data.length > 0) {
-                window.currentHistoryData = historyData;
-                // 延遲確保容器已經顯示
-                setTimeout(() => {
-                    renderKline(historyData);
-                }, 100);
-            }
-
-            // 價格資訊和表格添加到下方
-            html = '<div class="stock-info" style="margin-top: 20px;">';
-            const priceChangeClass = parseFloat(infoData.current_price) >= parseFloat(infoData.change) ? 'up' : 'down';
-            html += `
-                <div class="price-info">
-                    <div class="price-card">
-                        <div class="price-label">目前價格</div>
-                        <div class="price-value ${priceChangeClass}">${infoData.current_price}</div>
-                    </div>
-                    <div class="price-card">
-                        <div class="price-label">開盤價</div>
-                        <div class="price-value">${infoData.open}</div>
-                    </div>
-                    <div class="price-card">
-                        <div class="price-label">最高價</div>
-                        <div class="price-value">${infoData.high}</div>
-                    </div>
-                    <div class="price-card">
-                        <div class="price-label">最低價</div>
-                        <div class="price-value">${infoData.low}</div>
-                    </div>
-                    <div class="price-card">
-                        <div class="price-label">成交量</div>
-                        <div class="price-value">${infoData.volume}</div>
-                    </div>
-                </div>
-            `;
-
-            // 歷史資料表格
-            if (historyData.success && historyData.data && historyData.data.length > 0) {
-                html += '<h3>本月歷史資料</h3>';
-                html += '<table class="history-table"><thead><tr>';
-                html += '<th>日期</th><th>開盤</th><th>最高</th><th>最低</th><th>收盤</th><th>成交量</th>';
-                html += '</tr></thead><tbody>';
-
-                // 只顯示最近10筆資料
-                const recentData = historyData.data.slice(-10).reverse();
-                recentData.forEach(row => {
-                    html += '<tr>';
-                    html += `<td>${row.date}</td>`;
-                    html += `<td>${row.open.toFixed(2)}</td>`;
-                    html += `<td>${row.high.toFixed(2)}</td>`;
-                    html += `<td>${row.low.toFixed(2)}</td>`;
-                    html += `<td>${row.close.toFixed(2)}</td>`;
-                    html += `<td>${(row.volume / 1000).toFixed(0)}K</td>`;
-                    html += '</tr>';
-                });
-                html += '</tbody></table>';
-            }
-
-            html += `<div class="update-time">更新時間: ${infoData.time || new Date().toLocaleString('zh-TW')}</div>`;
-            html += '</div>';
-
-            document.getElementById('resultContent').innerHTML += html;
-        }
-
-        let currentChartType = 'kline';
-
-        function switchChart(chartType) {
-            currentChartType = chartType;
-            document.querySelectorAll('.chart-btn').forEach(btn => btn.classList.remove('active'));
-            event.target.classList.add('active');
-            
-            if (!window.currentHistoryData) return;
-            
-            if (chartType === 'kline') {
-                renderKline(window.currentHistoryData);
-            } else if (chartType === 'line') {
-                renderLineChart(window.currentHistoryData);
-            } else if (chartType === 'volume') {
-                renderVolumeChart(window.currentHistoryData);
-            } else if (chartType === 'ma') {
-                renderMAChart(window.currentHistoryData);
-            }
-        }
-
-        async function loadStockNews(stockCode) {
-            try {
-                document.getElementById('newsList').innerHTML = '載入中...';
-                const res = await fetch(`/api/news/${stockCode}`);
-                const data = await res.json();
-                
-                if (!data.success || !data.data || data.data.length === 0) {
-                    document.getElementById('newsList').innerHTML = '<p style="color:#999;">暫無相關新聞</p>';
-                    return;
-                }
-                
-                let newsHtml = '';
-                data.data.forEach(news => {
-                    newsHtml += `
-                        <div class="news-item">
-                            <a href="${news.link}" target="_blank">${news.title}</a>
-                            <div class="news-date">${news.date}</div>
-                            <span class="news-source">${news.source}</span>
-                        </div>
-                    `;
-                });
-                document.getElementById('newsList').innerHTML = newsHtml;
-            } catch (e) {
-                document.getElementById('newsList').innerHTML = '<p style="color:#e74c3c;">載入新聞失敗</p>';
-            }
-        }
-
-        async function addToFavorites(stockCode, stockName) {
-            if (!currentSession.userId) {
-                alert(t('pleaseLogin'));
-                return;
-            }
-            try {
-                const res = await fetch('/api/favorites', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ user_id: currentSession.userId, stock_code: stockCode, stock_name: stockName })
-                });
-                const data = await res.json();
-                if (!data.success) throw new Error(data.message || '加入最愛失敗');
-                alert(t('addFavSuccess'));
-                await loadMyFavorites();
-            } catch (e) {
-                alert(t('addFavFailed') + '：' + e.message);
-            }
-        }
-
-        async function loadMyFavorites() {
-            if (!currentSession.userId) {
-                return;
-            }
-            try {
-                const res = await fetch(`/api/favorites?user_id=${encodeURIComponent(currentSession.userId)}`);
-                const data = await res.json();
-                if (!data.success) throw new Error(data.message || '讀取最愛失敗');
-                const listEl = document.getElementById('favoritesList');
-                
-                if (data.is_admin) {
-                    // 管理員：按使用者分組顯示
-                    const grouped = {};
-                    (data.data || []).forEach(it => {
-                        const uid = it.user_id || 'unknown';
-                        if (!grouped[uid]) grouped[uid] = [];
-                        grouped[uid].push(it);
-                    });
-                    let html = '<div style="margin-top:8px; color:#c0c0c0; font-weight:bold;">👑 管理員模式：所有使用者的最愛</div>';
-                    for (const uid in grouped) {
-                        html += `<div style="margin-top:12px; color:#9ab5e7; font-weight:bold;">👤 ${uid}</div>`;
-                        html += '<div style="display:flex; flex-wrap:wrap; gap:8px; margin-top:6px;">';
-                        grouped[uid].forEach(it => {
-                            const code = it.stock_code || '';
-                            const name = it.stock_name || '';
-                            html += `<span class="stock-tag" onclick="quickSearch('${code}')">${code} ${name}</span>`;
-                        });
-                        html += '</div>';
-                    }
-                    listEl.innerHTML = html;
-                } else {
-                    // 一般使用者
-                    const items = (data.data || []).map(it => {
-                        const code = it.stock_code || '';
-                        const name = it.stock_name || '';
-                        return `<span class="stock-tag" onclick="quickSearch('${code}')">${code} ${name}</span>`;
-                    }).join(' ');
-                    if (items) {
-                        listEl.innerHTML = '<div style="display:flex; flex-wrap:wrap; gap:8px;">' + items + '</div>';
-                    } else {
-                        listEl.innerHTML = '<div style="margin-top:8px; color:#999; text-align:center; padding:20px;">尚無最愛股票，請先查詢股票後點擊「加入最愛」按鈕</div>';
-                    }
-                }
-            } catch (e) {
-                console.error('讀取最愛失敗：', e);
-            }
-        }
-
-        function parseNumber(value) {
-            if (value === null || value === undefined) return null;
-            const v = String(value).replace(/,/g, '').trim();
-            if (v === '-' || v === '' || v.toLowerCase() === 'nan') return null;
-            const n = Number(v);
-            return isNaN(n) ? null : n;
-        }
-
-        function normalizeDate(d) {
-            // 將 2025/01/02 或 114/01/02 格式轉為 Date 物件或字串
-            // 直接回傳原字串以供 X 軸類目顯示
-            return String(d).replace(/\./g, '/');
-        }
-
-        function renderKline(historyData) {
-            try {
-                if (!historyData.success || !historyData.data) {
-                    console.error('Invalid history data');
-                    return;
-                }
-                
-                const data = historyData.data;
-                // TA-Lib 格式：每筆包含 date, open, high, low, close, volume, ma5, ma10, ma20, ma60 等
-                const rows = data.slice(-60);  // 取最近 60 筆
-                const dates = rows.map(r => normalizeDate(r.date));
-                const ohlc = rows.map(r => [
-                    parseNumber(r.open),  // 開
-                    parseNumber(r.close), // 收
-                    parseNumber(r.high),  // 高
-                    parseNumber(r.low)    // 低
-                ]);
-                
-                // 提取 MA 數據
-                const ma5Data = rows.map(r => r.ma5);
-                const ma10Data = rows.map(r => r.ma10);
-                const ma20Data = rows.map(r => r.ma20);
-                const ma60Data = rows.map(r => r.ma60);
-
-                const el = document.getElementById('kline');
-                if (!el) return;
-                if (klineChart) {
-                    klineChart.dispose();
-                }
-                klineChart = echarts.init(el);
-
-                const option = {
-                    animation: true,
-                    backgroundColor: '#1a1a2e',
-                    title: { 
-                        text: 'K線圖 + 移動平均線 (TA-Lib)', 
-                        left: 'center',
-                        top: 10,
-                        textStyle: { fontSize: 16, color: '#e0e0e0', fontWeight: 'bold' } 
-                    },
-                    legend: {
-                        data: ['K線', 'MA5', 'MA10', 'MA20', 'MA60'],
-                        top: 40,
-                        textStyle: { color: '#c0c0c0' }
-                    },
-                    grid: { left: 50, right: 20, top: 90, bottom: 70 },
-                    tooltip: {
-                        trigger: 'axis',
-                        axisPointer: { type: 'cross' },
-                        backgroundColor: 'rgba(50, 50, 70, 0.95)',
-                        borderColor: '#5a7fc7',
-                        borderWidth: 1,
-                        textStyle: { color: '#e0e0e0' },
-                        valueFormatter: (v) => (v == null ? '-' : Number(v).toFixed(2))
-                    },
-                    xAxis: {
-                        type: 'category',
-                        data: dates,
-                        boundaryGap: true,
-                        axisLine: { lineStyle: { color: '#5a7fc7' } },
-                        axisLabel: { 
-                            color: '#c0c0c0',
-                            rotate: 45,
-                            fontSize: 10
-                        }
-                    },
-                    yAxis: {
-                        scale: true,
-                        axisLine: { lineStyle: { color: '#5a7fc7' } },
-                        axisLabel: { 
-                            color: '#c0c0c0',
-                            formatter: (v) => Number(v).toFixed(1)
-                        },
-                        splitLine: { lineStyle: { color: 'rgba(90, 127, 199, 0.15)' } }
-                    },
-                    dataZoom: [
-                        { type: 'inside', start: 40, end: 100 },
-                        { start: 40, end: 100 }
-                    ],
-                    series: [
-                        {
-                            name: 'K線',
-                            type: 'candlestick',
-                            data: ohlc,
-                            itemStyle: {
-                                color: '#e74c3c',      // 漲（收>=開）用紅
-                                color0: '#27ae60',     // 跌（收<開）用綠
-                                borderColor: '#e74c3c',
-                                borderColor0: '#27ae60'
-                            }
-                        },
-                        {
-                            name: 'MA5',
-                            type: 'line',
-                            data: ma5Data,
-                            smooth: true,
-                            lineStyle: { color: '#FF6B6B', width: 1.5 },
-                            showSymbol: false
-                        },
-                        {
-                            name: 'MA10',
-                            type: 'line',
-                            data: ma10Data,
-                            smooth: true,
-                            lineStyle: { color: '#4ECDC4', width: 1.5 },
-                            showSymbol: false
-                        },
-                        {
-                            name: 'MA20',
-                            type: 'line',
-                            data: ma20Data,
-                            smooth: true,
-                            lineStyle: { color: '#FFD93D', width: 1.5 },
-                            showSymbol: false
-                        },
-                        {
-                            name: 'MA60',
-                            type: 'line',
-                            data: ma60Data,
-                            smooth: true,
-                            lineStyle: { color: '#95E1D3', width: 1.5 },
-                            showSymbol: false
-                        }
-                    ]
-                };
-
-                klineChart.setOption(option);
-                window.addEventListener('resize', () => {
-                    if (klineChart) klineChart.resize();
-                });
-            } catch (e) {
-                console.error('Render K-line error:', e);
-            }
-        }
-
-        function renderLineChart(historyData) {
-            try {
-                if (!historyData.success || !historyData.data) return;
-                
-                const data = historyData.data;
-                const rows = data.slice(-60);
-                const dates = rows.map(r => normalizeDate(r.date));
-                const highs = rows.map(r => parseNumber(r.high));
-                const lows = rows.map(r => parseNumber(r.low));
-                const closes = rows.map(r => parseNumber(r.close));
-                const bollUpper = rows.map(r => r.boll_upper);
-                const bollMiddle = rows.map(r => r.boll_middle);
-                const bollLower = rows.map(r => r.boll_lower);
-
-                const el = document.getElementById('kline');
-                if (!el) return;
-                if (klineChart) {
-                    klineChart.dispose();
-                }
-                klineChart = echarts.init(el);
-
-                const option = {
-                    animation: true,
-                    backgroundColor: '#1a1a2e',
-                    title: { 
-                        text: '價格曲線 + 布林通道 (TA-Lib)', 
-                        left: 'center',
-                        top: 10,
-                        textStyle: { fontSize: 16, color: '#e0e0e0', fontWeight: 'bold' } 
-                    },
-                    grid: { left: 50, right: 30, top: 90, bottom: 70 },
-                    tooltip: {
-                        trigger: 'axis',
-                        axisPointer: { 
-                            type: 'cross',
-                            crossStyle: { color: '#5a7fc7' }
-                        },
-                        backgroundColor: 'rgba(50, 50, 70, 0.95)',
-                        borderColor: '#5a7fc7',
-                        borderWidth: 1,
-                        textStyle: { color: '#e0e0e0' },
-                        valueFormatter: (v) => (v == null ? '-' : Number(v).toFixed(2))
-                    },
-                    legend: {
-                        data: ['最高價', '最低價', '收盤價', 'BOLL上軌', 'BOLL中軌', 'BOLL下軌'],
-                        top: 45,
-                        textStyle: { color: '#c0c0c0', fontSize: 11 },
-                        itemWidth: 25,
-                        itemHeight: 12
-                    },
-                    xAxis: {
-                        type: 'category',
-                        data: dates,
-                        boundaryGap: false,
-                        axisLine: { lineStyle: { color: '#5a7fc7' } },
-                        axisLabel: { 
-                            color: '#c0c0c0',
-                            rotate: 45,
-                            fontSize: 10
-                        }
-                    },
-                    yAxis: {
-                        type: 'value',
-                        scale: true,
-                        axisLine: { lineStyle: { color: '#5a7fc7' } },
-                        axisLabel: { 
-                            color: '#c0c0c0',
-                            formatter: (v) => Number(v).toFixed(1)
-                        },
-                        splitLine: { lineStyle: { color: 'rgba(90, 127, 199, 0.15)' } }
-                    },
-                    dataZoom: [
-                        { type: 'inside', start: 40, end: 100 },
-                        { start: 40, end: 100 }
-                    ],
-                    series: [
-                        {
-                            name: currentLang === 'zh' ? '最高價' : 'High',
-                            type: 'line',
-                            data: highs,
-                            smooth: true,
-                            lineStyle: { color: '#ff6b9d', width: 3 },
-                            itemStyle: { color: '#ff6b9d' },
-                            showSymbol: false,
-                            areaStyle: {
-                                color: {
-                                    type: 'linear',
-                                    x: 0, y: 0, x2: 0, y2: 1,
-                                    colorStops: [
-                                        { offset: 0, color: 'rgba(255, 107, 157, 0.3)' },
-                                        { offset: 1, color: 'rgba(255, 107, 157, 0.05)' }
-                                    ]
-                                }
-                            }
-                        },
-                        {
-                            name: '最低價',
-                            type: 'line',
-                            data: lows,
-                            smooth: true,
-                            lineStyle: { color: '#4ecdc4', width: 2 },
-                            showSymbol: false
-                        },
-                        {
-                            name: '收盤價',
-                            type: 'line',
-                            data: closes,
-                            smooth: true,
-                            lineStyle: { color: '#ffe66d', width: 2 },
-                            showSymbol: false
-                        },
-                        {
-                            name: 'BOLL上軌',
-                            type: 'line',
-                            data: bollUpper,
-                            smooth: true,
-                            lineStyle: { color: '#ff6b9d', width: 1, type: 'dashed' },
-                            showSymbol: false
-                        },
-                        {
-                            name: 'BOLL中軌',
-                            type: 'line',
-                            data: bollMiddle,
-                            smooth: true,
-                            lineStyle: { color: '#a8dadc', width: 1.5 },
-                            showSymbol: false
-                        },
-                        {
-                            name: 'BOLL下軌',
-                            type: 'line',
-                            data: bollLower,
-                            smooth: true,
-                            lineStyle: { color: '#ff6b9d', width: 1, type: 'dashed' },
-                            showSymbol: false
-                        }
-                    ]
-                };
-
-                klineChart.setOption(option);
-                window.addEventListener('resize', () => {
-                    if (klineChart) klineChart.resize();
-                });
-            } catch (e) {
-                console.error('Render line chart error:', e);
-            }
-        }
-
-        function renderVolumeChart(historyData) {
-            try {
-                if (!historyData.success || !historyData.data) return;
-                
-                const data = historyData.data;
-                const rows = data.slice(-60);
-                const dates = rows.map(r => normalizeDate(r.date));
-                const volumes = rows.map(r => parseNumber(r.volume));
-                const volumeMa5 = rows.map(r => r.volume_ma5);
-                const volumeMa10 = rows.map(r => r.volume_ma10);
-
-                const el = document.getElementById('kline');
-                if (!el) return;
-                if (klineChart) {
-                    klineChart.dispose();
-                }
-                klineChart = echarts.init(el);
-
-                const option = {
-                    animation: true,
-                    backgroundColor: '#1a1a2e',
-                    title: { 
-                        text: '成交量分析 (TA-Lib)', 
-                        left: 'center',
-                        top: 10,
-                        textStyle: { fontSize: 16, color: '#e0e0e0', fontWeight: 'bold' } 
-                    },
-                    grid: { left: 60, right: 30, top: 90, bottom: 70 },
-                    tooltip: {
-                        trigger: 'axis',
-                        axisPointer: { type: 'shadow' },
-                        backgroundColor: 'rgba(50, 50, 70, 0.95)',
-                        borderColor: '#5a7fc7',
-                        borderWidth: 1,
-                        textStyle: { color: '#e0e0e0' },
-                        formatter: (params) => {
-                            let result = params[0].name + '<br/>';
-                            params.forEach(p => {
-                                const val = p.value ? Number(p.value).toLocaleString() : '-';
-                                result += p.marker + p.seriesName + ': ' + val + '<br/>';
-                            });
-                            return result;
-                        }
-                    },
-                    legend: {
-                        data: ['成交量', 'VOL MA5', 'VOL MA10'],
-                        top: 45,
-                        textStyle: { color: '#c0c0c0', fontSize: 13 }
-                    },
-                    xAxis: {
-                        type: 'category',
-                        data: dates,
-                        axisLine: { lineStyle: { color: '#5a7fc7' } },
-                        axisLabel: { 
-                            color: '#c0c0c0',
-                            rotate: 45,
-                            fontSize: 10
-                        }
-                    },
-                    yAxis: {
-                        type: 'value',
-                        name: '成交量',
-                        axisLine: { lineStyle: { color: '#5a7fc7' } },
-                        axisLabel: { 
-                            color: '#c0c0c0',
-                            formatter: (v) => (v / 1000).toFixed(0) + 'K'
-                        },
-                        splitLine: { lineStyle: { color: 'rgba(90, 127, 199, 0.15)' } },
-                        nameTextStyle: { color: '#c0c0c0' }
-                    },                            },
-                            splitLine: { show: false },
-                            nameTextStyle: { color: '#c0c0c0' }
-                        }
-                    ],
-                    dataZoom: [
-                        { type: 'inside', start: 40, end: 100 },
-                        { start: 40, end: 100 }
-                    ],
-                    series: [
-                        {
-                            name: currentLang === 'zh' ? '成交股數' : 'Volume',
-                            type: 'bar',
-                            data: volumes,
-                            yAxisIndex: 0,
-                            itemStyle: { 
-                                color: {
-                                    type: 'linear',
-                                    x: 0, y: 0, x2: 0, y2: 1,
-                                    colorStops: [
-                                        { offset: 0, color: '#7aa3ff' },
-                                        { offset: 1, color: '#4a6fa5' }
-                                    ]
-                                }
-                            },
-                            barMaxWidth: 20
-                        },
-                    dataZoom: [
-                        { type: 'inside', start: 40, end: 100 },
-                        { start: 40, end: 100 }
-                    ],
-                    series: [
-                        {
-                            name: '成交量',
-                            type: 'bar',
-                            data: volumes,
-                            itemStyle: { 
-                                color: '#5a7fc7',
-                                borderRadius: [4, 4, 0, 0]
-                            },
-                            barMaxWidth: 20
-                        },
-                        {
-                            name: 'VOL MA5',
-                            type: 'line',
-                            data: volumeMa5,
-                            smooth: true,
-                            lineStyle: { color: '#ff6b9d', width: 2 },
-                            showSymbol: false
-                        },
-                        {
-                            name: 'VOL MA10',
-                            type: 'line',
-                            data: volumeMa10,
-                            smooth: true,
-                            lineStyle: { color: '#4ecdc4', width: 2 },
-                            showSymbol: false
-                        }
-                    ]
-                };
-
-                klineChart.setOption(option);
-                window.addEventListener('resize', () => {
-                    if (klineChart) klineChart.resize();
-                });
-            } catch (e) {
-                console.error('Render volume chart error:', e);
-            }
-        }
-
-        function renderMAChart(historyData) {
-            try {
-                if (!historyData.success || !historyData.data) return;
-                
-                const data = historyData.data;
-                const rows = data.slice(-60);
-                const dates = rows.map(r => normalizeDate(r.date));
-                const rsi6 = rows.map(r => r.rsi6);
-                const rsi12 = rows.map(r => r.rsi12);
-                const macd = rows.map(r => r.macd);
-                const macdSignal = rows.map(r => r.macd_signal);
-                const macdHist = rows.map(r => r.macd_hist);
-
-                const el = document.getElementById('kline');
-                if (!el) return;
-                if (klineChart) {
-                    klineChart.dispose();
-                }
-                klineChart = echarts.init(el);
-
-                const option = {
-                    animation: true,
-                    backgroundColor: '#1a1a2e',
-                    title: { 
-                        text: currentLang === 'zh' ? '移動平均線 (MA)' : 'Moving Average (MA)', 
-                        left: 'center',
-                        top: 10,
-                        textStyle: { fontSize: 16, color: '#e0e0e0', fontWeight: 'bold' } 
-                    },
-                    grid: { left: 50, right: 30, top: 90, bottom: 70 },
-                    tooltip: {
-                        trigger: 'axis',
-                        axisPointer: { 
-                            type: 'cross',
-                            crossStyle: { color: '#5a7fc7' }
-                        },
-                        backgroundColor: 'rgba(50, 50, 70, 0.95)',
-                        borderColor: '#5a7fc7',
-                        borderWidth: 1,
-                        textStyle: { color: '#e0e0e0' },
-                        valueFormatter: (v) => (v == null ? '-' : Number(v).toFixed(2))
-                    },
-                    legend: {
-                        data: currentLang === 'zh' ? ['收盤價', 'MA5', 'MA10', 'MA20', 'MA60'] : ['Close', 'MA5', 'MA10', 'MA20', 'MA60'],
-                        top: 45,
-                        textStyle: { color: '#c0c0c0', fontSize: 12 },
-                        itemWidth: 25,
-                    title: { 
-                        text: 'RSI + MACD 技術指標 (TA-Lib)', 
-                        left: 'center',
-                        top: 10,
-                        textStyle: { fontSize: 16, color: '#e0e0e0', fontWeight: 'bold' } 
-                    },
-                    legend: {
-                        data: ['RSI6', 'RSI12', 'MACD', 'Signal', 'Histogram'],
-                        top: 45,
-                        textStyle: { color: '#c0c0c0', fontSize: 11 },
-                        itemWidth: 25,
-                        itemHeight: 12
-                    },
-                    grid: [
-                        { left: 50, right: 30, top: 90, height: '35%' },
-                        { left: 50, right: 30, top: '55%', height: '35%' }
-                    ],
-                    xAxis: [
-                        {
-                            type: 'category',
-                            data: dates,
-                            gridIndex: 0,
-                            axisLine: { lineStyle: { color: '#5a7fc7' } },
-                            axisLabel: { show: false }
-                        },
-                        {
-                            type: 'category',
-                            data: dates,
-                            gridIndex: 1,
-                            axisLine: { lineStyle: { color: '#5a7fc7' } },
-                            axisLabel: { 
-                                color: '#c0c0c0',
-                                rotate: 45,
-                                fontSize: 10
-                            }
-                        }
-                    ],
-                    yAxis: [
-                        {
-                            type: 'value',
-                            name: 'RSI',
-                            gridIndex: 0,
-                            min: 0,
-                            max: 100,
-                            axisLine: { lineStyle: { color: '#5a7fc7' } },
-                            axisLabel: { color: '#c0c0c0' },
-                            splitLine: { lineStyle: { color: 'rgba(90, 127, 199, 0.15)' } }
-                        },
-                        {
-                            type: 'value',
-                            name: 'MACD',
-                            gridIndex: 1,
-                            axisLine: { lineStyle: { color: '#5a7fc7' } },
-                            axisLabel: { color: '#c0c0c0' },
-                            splitLine: { lineStyle: { color: 'rgba(90, 127, 199, 0.15)' } }
-                        }
-                    ],
-                    dataZoom: [
-                        { type: 'inside', xAxisIndex: [0, 1], start: 40, end: 100 },
-                        { xAxisIndex: [0, 1], start: 40, end: 100 }
-                    ],
-                    series: [
-                        {
-                            name: 'RSI6',
-                            type: 'line',
-                            data: rsi6,
-                            xAxisIndex: 0,
-                            yAxisIndex: 0,
-                            smooth: true,
-                            lineStyle: { color: '#ff6b9d', width: 2 },
-                            showSymbol: false
-                        },
-                        {
-                            name: 'RSI12',
-                            type: 'line',
-                            data: rsi12,
-                            xAxisIndex: 0,
-                            yAxisIndex: 0,
-                            smooth: true,
-                            lineStyle: { color: '#4ecdc4', width: 2 },
-                            showSymbol: false
-                        },
-                        {
-                            name: 'MACD',
-                            type: 'line',
-                            data: macd,
-                            xAxisIndex: 1,
-                            yAxisIndex: 1,
-                            smooth: true,
-                            lineStyle: { color: '#ffe66d', width: 2 },
-                            showSymbol: false
-                        },
-                        {
-                            name: 'Signal',
-                            type: 'line',
-                            data: macdSignal,
-                            xAxisIndex: 1,
-                            yAxisIndex: 1,
-                            smooth: true,
-                            lineStyle: { color: '#a29bfe', width: 2 },
-                            showSymbol: false
-                        },
-                        {
-                            name: 'Histogram',
-                            type: 'bar',
-                            data: macdHist,
-                            xAxisIndex: 1,
-                            yAxisIndex: 1,
-                            itemStyle: { 
-                                color: (params) => params.value >= 0 ? '#e74c3c' : '#27ae60'
-                            },
-                            barMaxWidth: 10
-                            showSymbol: false
-                        }
-                    ]
-                };
-
-                klineChart.setOption(option);
-                window.addEventListener('resize', () => {
-                    if (klineChart) klineChart.resize();
-                });
-            } catch (e) {
-                console.error('Render MA chart error:', e);
-            }
-        }
-
-        function toggleAutoRefresh() {
-            autoRefreshEnabled = document.getElementById('autoRefreshToggle').checked;
-            const indicator = document.getElementById('refreshIndicator');
-            const statusText = document.getElementById('refreshStatusText');
-            
-            if (autoRefreshEnabled) {
-                indicator.classList.add('active');
-                statusText.textContent = t('autoRefreshOn');
-                resetRefreshTimer();
-            } else {
-                indicator.classList.remove('active');
-                statusText.textContent = t('autoRefreshOff');
-                clearRefreshTimer();
-            }
-        }
-
-        function resetRefreshTimer() {
-            clearRefreshTimer();
-            refreshCountdown = 5;
-            updateCountdownDisplay();
-            
-            // 倍數計時
-            countdownInterval = setInterval(() => {
-                refreshCountdown--;
-                updateCountdownDisplay();
-                
-                if (refreshCountdown <= 0) {
-                    refreshCountdown = 5;
-                }
-            }, 1000);
-            
-            // 主更新計時
-            autoRefreshInterval = setInterval(() => {
-                if (currentStockCode && autoRefreshEnabled) {
-                    refreshStockData();
-                }
-            }, 5000);
-        }
-
-        function clearRefreshTimer() {
-            if (autoRefreshInterval) {
-                clearInterval(autoRefreshInterval);
-                autoRefreshInterval = null;
-            }
-            if (countdownInterval) {
-                clearInterval(countdownInterval);
-                countdownInterval = null;
-            }
-            document.getElementById('refreshCountdown').textContent = '';
-        }
-
-        function updateCountdownDisplay() {
-            const countdownEl = document.getElementById('refreshCountdown');
-            if (autoRefreshEnabled && refreshCountdown > 0) {
-                countdownEl.textContent = `(${t('nextUpdate')} ${refreshCountdown}${t('seconds')})`;
-            } else {
-                countdownEl.textContent = '';
-            }
-        }
-
-        async function refreshStockData() {
-            if (!currentStockCode) return;
-            
-            try {
-                // 静默更新，不顯示 loading
-                const infoResponse = await fetch(`/api/stock/${currentStockCode}`);
-                const infoData = await infoResponse.json();
-
-                if (!infoData.success) return;
-
-                const indicatorsResponse = await fetch(`/api/stock/indicators/${currentStockCode}`);
-                const indicatorsData = await indicatorsResponse.json();
-
-                displayResult(infoData, indicatorsData);
-                
-                // 重置倍數
-                refreshCountdown = 5;
-            } catch (error) {
-                console.error('自動更新失敗:', error);
-            }
-        }
-
-        // Enter 鍵搜尋
-        document.getElementById('stockInput').addEventListener('keypress', function(e) {
-            if (e.key === 'Enter') {
-                searchStock();
-            }
-        });
-
-        // 頁面載入時自動查詢最愛第一個
-        window.addEventListener('load', function() {
-            setTimeout(async () => {
-                if (currentSession.userId) {
-                    try {
-                        const response = await fetch('/api/favorites');
-                        const data = await response.json();
-                        if (data.success && data.data && data.data.length > 0) {
-                            const firstFavorite = data.data[0];
-                            document.getElementById('stockInput').value = firstFavorite.stock_code;
-                            searchStock();
-                        }
-                    } catch (error) {
-                        console.log('無最愛股票');
-                    }
-                }
-            }, 800);
-        });
-
-        // 添加登入/註冊按鈕事件監聽器
+        // 初始化
         document.addEventListener('DOMContentLoaded', function() {
-            console.log('[INIT] Adding event listeners to login/register buttons');
+            // 登入按鈕
+            document.getElementById('loginBtn').addEventListener('click', handleLogin);
+            document.getElementById('registerBtn').addEventListener('click', handleRegister);
+            document.getElementById('logoutBtn').addEventListener('click', handleLogout);
             
-            const loginBtn = document.getElementById('loginBtn');
-            const registerBtn = document.getElementById('registerBtn');
+            // 查詢按鈕
+            document.getElementById('searchBtn').addEventListener('click', searchStock);
             
-            if (loginBtn) {
-                loginBtn.addEventListener('click', handleLogin);
-                console.log('[INIT] Login button listener added');
-            } else {
-                console.error('[INIT] Login button not found!');
-            }
+            // 關注清單按鈕
+            document.getElementById('toggleAddBtn').addEventListener('click', toggleAddForm);
+            document.getElementById('confirmAddBtn').addEventListener('click', addFavoriteNew);
             
-            if (registerBtn) {
-                registerBtn.addEventListener('click', handleRegister);
-                console.log('[INIT] Register button listener added');
-            } else {
-                console.error('[INIT] Register button not found!');
-            }
-        });
-
-        // 頁面載入時自動查詢最愛列表第一個股票
-        window.addEventListener('DOMContentLoaded', async function() {
-            // 等待登入狀態載入
-            setTimeout(async () => {
-                if (currentSession.userId) {
-                    try {
-                        const response = await fetch('/api/favorites');
-                        const data = await response.json();
-                        if (data.success && data.data && data.data.length > 0) {
-                            const firstFavorite = data.data[0];
-                            document.getElementById('stockInput').value = firstFavorite.stock_code;
-                            searchStock();
-                        }
-                    } catch (error) {
-                        console.error('自動載入最愛失敗:', error);
-                    }
-                }
-            }, 500);
+            // Enter 鍵登入
+            document.getElementById('password').addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') handleLogin();
+            });
+            
+            // Enter 鍵查詢
+            document.getElementById('stockCode').addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') searchStock();
+            });
+            
+            // Enter 鍵新增關注
+            document.getElementById('newStockCode').addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') addFavoriteNew();
+            });
+            
+            // 標籤切換
+            document.querySelectorAll('.tab').forEach(tab => {
+                tab.addEventListener('click', function() {
+                    switchTab(this.getAttribute('data-tab'));
+                });
+            });
         });
     </script>
 </body>

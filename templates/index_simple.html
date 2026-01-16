@@ -1,0 +1,636 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>台股即時查詢系統</title>
+    <script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Microsoft JhengHei', Arial, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #0f3460 100%);
+            min-height: 100vh;
+            padding: 20px;
+            color: #e0e0e0;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            font-size: 2.2em;
+            margin-bottom: 10px;
+        }
+
+        .auth-panel {
+            background: #252538;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.4);
+            max-width: 400px;
+            margin: 0 auto 20px;
+            border: 1px solid #3a3a52;
+        }
+
+        .auth-panel h2 {
+            margin-bottom: 20px;
+            color: #c0c0c0;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-size: 14px;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #3a3a52;
+            border-radius: 6px;
+            font-size: 14px;
+            background: #1a1a2e;
+            color: #e0e0e0;
+            outline: none;
+        }
+
+        .form-group input:focus {
+            border-color: #5a7fc7;
+            box-shadow: 0 0 0 3px rgba(90, 127, 199, 0.3);
+        }
+
+        .button-group {
+            display: flex;
+            gap: 10px;
+        }
+
+        button {
+            flex: 1;
+            padding: 12px;
+            background: linear-gradient(135deg, #4a6fa5 0%, #5a7fc7 100%);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 15px;
+            font-weight: bold;
+            transition: all 0.3s;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(90, 127, 199, 0.5);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        .main-panel {
+            display: none;
+            background: #1e1e2e;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.6);
+            border: 1px solid #2d2d44;
+        }
+
+        .main-panel.show {
+            display: block;
+        }
+
+        .user-info {
+            background: #252538;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            border: 1px solid #3a3a52;
+        }
+
+        .user-info span {
+            font-weight: bold;
+            color: #5a7fc7;
+        }
+
+        .logout-btn {
+            background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
+        }
+
+        .search-form {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .search-form input {
+            flex: 1;
+            padding: 12px;
+            border: 2px solid #3a3a52;
+            border-radius: 8px;
+            font-size: 14px;
+            background: #1a1a2e;
+            color: #e0e0e0;
+            outline: none;
+        }
+
+        .search-form input:focus {
+            border-color: #5a7fc7;
+        }
+
+        .search-form button {
+            padding: 12px 30px;
+            white-space: nowrap;
+        }
+
+        .result {
+            background: #252538;
+            padding: 20px;
+            border-radius: 8px;
+            border: 1px solid #3a3a52;
+            margin-top: 20px;
+        }
+
+        .result h3 {
+            margin-bottom: 15px;
+            color: #5a7fc7;
+        }
+
+        .result-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px 0;
+            border-bottom: 1px solid #3a3a52;
+        }
+
+        .result-item:last-child {
+            border-bottom: none;
+        }
+
+        .result-label {
+            color: #999;
+        }
+
+        .result-value {
+            color: #e0e0e0;
+            font-weight: bold;
+        }
+
+        .error {
+            background: #c0392b;
+            color: white;
+            padding: 12px;
+            border-radius: 6px;
+            margin-bottom: 15px;
+            display: none;
+        }
+
+        .error.show {
+            display: block;
+        }
+
+        .success {
+            background: #27ae60;
+            color: white;
+            padding: 12px;
+            border-radius: 6px;
+            margin-bottom: 15px;
+            display: none;
+        }
+
+        .success.show {
+            display: block;
+        }
+
+        #chartContainer {
+            width: 100%;
+            height: 500px;
+            margin-top: 20px;
+            background: #1a1a2e;
+            border-radius: 8px;
+            border: 1px solid #3a3a52;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📈 台股即時查詢系統</h1>
+            <p>輸入股票代碼查詢即時資訊</p>
+        </div>
+
+        <!-- 登入面板 -->
+        <div id="authPanel" class="auth-panel">
+            <h2>🔐 登入 / 註冊</h2>
+            <div class="error" id="authError"></div>
+            <div class="success" id="authSuccess"></div>
+            
+            <div class="form-group">
+                <label>使用者 ID</label>
+                <input type="text" id="userId" placeholder="輸入使用者 ID">
+            </div>
+            
+            <div class="form-group">
+                <label>密碼</label>
+                <input type="password" id="password" placeholder="輸入密碼（至少6個字元）">
+            </div>
+            
+            <div class="button-group">
+                <button id="loginBtn" onclick="handleLogin()">🔑 登入</button>
+                <button id="registerBtn" onclick="handleRegister()">✨ 註冊</button>
+            </div>
+        </div>
+
+        <!-- 主面板 -->
+        <div id="mainPanel" class="main-panel">
+            <div class="user-info">
+                <p>歡迎，<span id="currentUser"></span></p>
+                <button class="logout-btn" onclick="handleLogout()" style="margin-top: 10px; width: auto; padding: 8px 20px;">🚪 登出</button>
+            </div>
+
+            <div class="search-form">
+                <input type="text" id="stockCode" placeholder="請輸入股票代碼（例如：2330）">
+                <button onclick="searchStock()">查詢</button>
+            </div>
+
+            <div id="result" class="result" style="display: none;">
+                <h3 id="resultTitle"></h3>
+                <div id="resultContent"></div>
+                <div id="chartContainer"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 當前登入狀態
+        let currentSession = {
+            userId: null,
+            isAdmin: false
+        };
+
+        // 登入
+        async function handleLogin() {
+            const userId = document.getElementById('userId').value.trim();
+            const password = document.getElementById('password').value.trim();
+            const errorDiv = document.getElementById('authError');
+            const successDiv = document.getElementById('authSuccess');
+
+            // 隱藏訊息
+            errorDiv.classList.remove('show');
+            successDiv.classList.remove('show');
+
+            if (!userId || !password) {
+                errorDiv.textContent = '請輸入使用者 ID 和密碼';
+                errorDiv.classList.add('show');
+                return;
+            }
+
+            try {
+                const response = await fetch('/api/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ user_id: userId, password: password })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    currentSession = { userId: data.user_id, isAdmin: data.is_admin };
+                    successDiv.textContent = '登入成功！';
+                    successDiv.classList.add('show');
+                    
+                    setTimeout(() => {
+                        showMainPanel();
+                    }, 500);
+                } else {
+                    errorDiv.textContent = data.message || '登入失敗';
+                    errorDiv.classList.add('show');
+                }
+            } catch (error) {
+                errorDiv.textContent = '登入出錯：' + error.message;
+                errorDiv.classList.add('show');
+            }
+        }
+
+        // 註冊
+        async function handleRegister() {
+            const userId = document.getElementById('userId').value.trim();
+            const password = document.getElementById('password').value.trim();
+            const errorDiv = document.getElementById('authError');
+            const successDiv = document.getElementById('authSuccess');
+
+            errorDiv.classList.remove('show');
+            successDiv.classList.remove('show');
+
+            if (!userId || !password) {
+                errorDiv.textContent = '請輸入使用者 ID 和密碼';
+                errorDiv.classList.add('show');
+                return;
+            }
+
+            if (password.length < 6) {
+                errorDiv.textContent = '密碼至少需要6個字元';
+                errorDiv.classList.add('show');
+                return;
+            }
+
+            try {
+                const response = await fetch('/api/register', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ user_id: userId, password: password })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    successDiv.textContent = '註冊成功！正在登入...';
+                    successDiv.classList.add('show');
+                    
+                    setTimeout(() => {
+                        currentSession = { userId: data.user_id, isAdmin: data.is_admin };
+                        showMainPanel();
+                    }, 500);
+                } else {
+                    errorDiv.textContent = data.message || '註冊失敗';
+                    errorDiv.classList.add('show');
+                }
+            } catch (error) {
+                errorDiv.textContent = '註冊出錯：' + error.message;
+                errorDiv.classList.add('show');
+            }
+        }
+
+        // 登出
+        function handleLogout() {
+            currentSession = { userId: null, isAdmin: false };
+            document.getElementById('authPanel').style.display = 'block';
+            document.getElementById('mainPanel').classList.remove('show');
+            document.getElementById('userId').value = '';
+            document.getElementById('password').value = '';
+        }
+
+        // 顯示主面板
+        function showMainPanel() {
+            document.getElementById('authPanel').style.display = 'none';
+            document.getElementById('mainPanel').classList.add('show');
+            document.getElementById('currentUser').textContent = currentSession.userId;
+        }
+
+        // 查詢股票
+        async function searchStock() {
+            const stockCode = document.getElementById('stockCode').value.trim();
+            const result = document.getElementById('result');
+            const resultContent = document.getElementById('resultContent');
+
+            if (!stockCode) {
+                alert('請輸入股票代碼');
+                return;
+            }
+
+            try {
+                const response = await fetch(`/api/stock/${stockCode}`);
+                const data = await response.json();
+
+                if (data.success) {
+                    document.getElementById('resultTitle').textContent = 
+                        `${data.stock_code} - ${data.stock_name}`;
+                    
+                    resultContent.innerHTML = `
+                        <div class="result-item">
+                            <span class="result-label">現價</span>
+                            <span class="result-value">${data.current_price}</span>
+                        </div>
+                        <div class="result-item">
+                            <span class="result-label">漲跌</span>
+                            <span class="result-value">${data.change}</span>
+                        </div>
+                        <div class="result-item">
+                            <span class="result-label">開盤</span>
+                            <span class="result-value">${data.open}</span>
+                        </div>
+                        <div class="result-item">
+                            <span class="result-label">最高</span>
+                            <span class="result-value">${data.high}</span>
+                        </div>
+                        <div class="result-item">
+                            <span class="result-label">最低</span>
+                            <span class="result-value">${data.low}</span>
+                        </div>
+                        <div class="result-item">
+                            <span class="result-label">成交量</span>
+                            <span class="result-value">${data.volume}</span>
+                        </div>
+                        <div class="result-item">
+                            <span class="result-label">時間</span>
+                            <span class="result-value">${data.time}</span>
+                        </div>
+                    `;
+                    result.style.display = 'block';
+                    
+                    // 繪製 K 線圖
+                    if (data.kline_data && data.kline_data.length > 0) {
+                        renderKlineChart(data.kline_data, data.stock_name);
+                    }
+                } else {
+                    resultContent.innerHTML = `<p style="color: #e74c3c;">${data.message}</p>`;
+                    result.style.display = 'block';
+                }
+            } catch (error) {
+                resultContent.innerHTML = `<p style="color: #e74c3c;">查詢出錯：${error.message}</p>`;
+                result.style.display = 'block';
+            }
+        }
+
+        // 繪製 K 線圖
+        function renderKlineChart(klineData, stockName) {
+            const chartDom = document.getElementById('chartContainer');
+            const myChart = echarts.init(chartDom);
+            
+            // 準備數據
+            const dates = klineData.map(item => item[0]);
+            const candlestickData = klineData.map(item => [item[1], item[4], item[3], item[2]]);
+            const volumes = klineData.map(item => item[5]);
+            
+            // 計算 MA5 和 MA10
+            const ma5 = calculateMA(5, candlestickData);
+            const ma10 = calculateMA(10, candlestickData);
+            
+            const option = {
+                backgroundColor: '#1a1a2e',
+                title: {
+                    text: `${stockName} K線圖`,
+                    left: 'center',
+                    textStyle: { color: '#e0e0e0' }
+                },
+                tooltip: {
+                    trigger: 'axis',
+                    axisPointer: { type: 'cross' },
+                    backgroundColor: 'rgba(50, 50, 50, 0.9)',
+                    borderColor: '#777',
+                    textStyle: { color: '#e0e0e0' }
+                },
+                legend: {
+                    data: ['K線', 'MA5', 'MA10'],
+                    top: 30,
+                    textStyle: { color: '#e0e0e0' }
+                },
+                grid: [{
+                    left: '10%',
+                    right: '8%',
+                    top: '15%',
+                    height: '50%'
+                }, {
+                    left: '10%',
+                    right: '8%',
+                    top: '70%',
+                    height: '15%'
+                }],
+                xAxis: [{
+                    type: 'category',
+                    data: dates,
+                    scale: true,
+                    boundaryGap: false,
+                    axisLine: { lineStyle: { color: '#8392A5' } },
+                    splitLine: { show: false },
+                    axisLabel: { color: '#e0e0e0' },
+                    min: 'dataMin',
+                    max: 'dataMax'
+                }, {
+                    type: 'category',
+                    gridIndex: 1,
+                    data: dates,
+                    scale: true,
+                    boundaryGap: false,
+                    axisLine: { lineStyle: { color: '#8392A5' } },
+                    splitLine: { show: false },
+                    axisLabel: { show: false },
+                    min: 'dataMin',
+                    max: 'dataMax'
+                }],
+                yAxis: [{
+                    scale: true,
+                    splitArea: { show: true },
+                    axisLabel: { color: '#e0e0e0' },
+                    axisLine: { lineStyle: { color: '#8392A5' } },
+                    splitLine: { lineStyle: { color: '#2d2d44' } }
+                }, {
+                    scale: true,
+                    gridIndex: 1,
+                    splitNumber: 2,
+                    axisLabel: { show: false },
+                    axisLine: { show: false },
+                    splitLine: { show: false }
+                }],
+                dataZoom: [{
+                    type: 'inside',
+                    xAxisIndex: [0, 1],
+                    start: 50,
+                    end: 100
+                }, {
+                    show: true,
+                    xAxisIndex: [0, 1],
+                    type: 'slider',
+                    top: '90%',
+                    start: 50,
+                    end: 100,
+                    textStyle: { color: '#e0e0e0' }
+                }],
+                series: [{
+                    name: 'K線',
+                    type: 'candlestick',
+                    data: candlestickData,
+                    itemStyle: {
+                        color: '#ef5350',
+                        color0: '#26a69a',
+                        borderColor: '#ef5350',
+                        borderColor0: '#26a69a'
+                    }
+                }, {
+                    name: 'MA5',
+                    type: 'line',
+                    data: ma5,
+                    smooth: true,
+                    lineStyle: { width: 1, color: '#FFA500' },
+                    showSymbol: false
+                }, {
+                    name: 'MA10',
+                    type: 'line',
+                    data: ma10,
+                    smooth: true,
+                    lineStyle: { width: 1, color: '#00CED1' },
+                    showSymbol: false
+                }, {
+                    name: '成交量',
+                    type: 'bar',
+                    xAxisIndex: 1,
+                    yAxisIndex: 1,
+                    data: volumes,
+                    itemStyle: {
+                        color: function(params) {
+                            const dataIndex = params.dataIndex;
+                            return candlestickData[dataIndex][0] > candlestickData[dataIndex][1] 
+                                ? '#26a69a' : '#ef5350';
+                        }
+                    }
+                }]
+            };
+            
+            myChart.setOption(option);
+            
+            // 響應式
+            window.addEventListener('resize', function() {
+                myChart.resize();
+            });
+        }
+
+        // 計算移動平均線
+        function calculateMA(dayCount, data) {
+            const result = [];
+            for (let i = 0; i < data.length; i++) {
+                if (i < dayCount - 1) {
+                    result.push('-');
+                    continue;
+                }
+                let sum = 0;
+                for (let j = 0; j < dayCount; j++) {
+                    sum += data[i - j][1];
+                }
+                result.push((sum / dayCount).toFixed(2));
+            }
+            return result;
+        }
+
+        // 按 Enter 鍵登入
+        document.addEventListener('DOMContentLoaded', function() {
+            document.getElementById('password').addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    handleLogin();
+                }
+            });
+
+            document.getElementById('stockCode').addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    searchStock();
+                }
+            });
+        });
+    </script>
+</body>
+</html>
