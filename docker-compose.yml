@@ -22,7 +22,7 @@ services:
     container_name: pecunianexus
     ports:
       - "5788:5788"
-      - "11434:11434"  # Ollama API 端口
+      # - "11434:11434"  # Ollama API 端口（容器內部使用，不需暴露）
     environment:
       - FLASK_ENV=development
       - DATABASE_URL=postgresql://app:appsecret@postgres:5432/pecunia
@@ -34,7 +34,6 @@ services:
       postgres:
         condition: service_healthy
     volumes:
-      - .:/app
       - stock-data:/app/data
       - ollama-models:/root/.ollama  # Ollama 模型持久化
 
