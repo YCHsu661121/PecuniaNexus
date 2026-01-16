@@ -26,7 +26,9 @@
         }
 
         .header {
-            text-align: center;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
             color: #e0e0e0;
             margin-bottom: 30px;
         }
@@ -478,13 +480,128 @@
                 top: 0;
             }
         }
+
+        /* AI 聊天樣式 */
+        .ai-chat-container {
+            background: #252538;
+            border-radius: 8px;
+            margin-top: 20px;
+            border: 1px solid #3a3a52;
+            overflow: hidden;
+        }
+
+        .ai-chat-header {
+            background: #1a1a2e;
+            padding: 12px 15px;
+            border-bottom: 1px solid #3a3a52;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .ai-chat-header h4 {
+            color: #5a7fc7;
+            font-size: 14px;
+            margin: 0;
+        }
+
+        .ai-provider-select {
+            background: #1e1e2e;
+            border: 1px solid #3a3a52;
+            color: #e0e0e0;
+            padding: 5px 10px;
+            border-radius: 4px;
+            font-size: 12px;
+            cursor: pointer;
+        }
+
+        .ai-messages {
+            height: 300px;
+            overflow-y: auto;
+            padding: 15px;
+            background: #1a1a2e;
+        }
+
+        .ai-message {
+            margin-bottom: 15px;
+            padding: 10px;
+            border-radius: 6px;
+            line-height: 1.5;
+            font-size: 13px;
+        }
+
+        .ai-message.user {
+            background: #4a6fa5;
+            color: white;
+            margin-left: 30px;
+        }
+
+        .ai-message.assistant {
+            background: #252538;
+            color: #e0e0e0;
+            margin-right: 30px;
+            border: 1px solid #3a3a52;
+        }
+
+        .ai-message.system {
+            background: #e74c3c;
+            color: white;
+            text-align: center;
+            margin: 0;
+        }
+
+        .ai-input-container {
+            padding: 15px;
+            background: #1e1e2e;
+            border-top: 1px solid #3a3a52;
+            display: flex;
+            gap: 10px;
+        }
+
+        .ai-input {
+            flex: 1;
+            padding: 8px 12px;
+            background: #252538;
+            border: 1px solid #3a3a52;
+            border-radius: 6px;
+            color: #e0e0e0;
+            font-size: 13px;
+            outline: none;
+        }
+
+        .ai-input:focus {
+            border-color: #5a7fc7;
+        }
+
+        .ai-send-btn {
+            padding: 8px 20px;
+            background: linear-gradient(135deg, #4a6fa5 0%, #5a7fc7 100%);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 13px;
+            transition: all 0.3s;
+        }
+
+        .ai-send-btn:hover {
+            transform: translateY(-1px);
+        }
+
+        .ai-send-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
     </style>
 </head>
 <body>
     <div class="container">
         <div class="header">
-            <h1>📈 AI 智慧選股高手</h1>
-            <p class="app-version">v3.0 - 技術分析專業版</p>
+            <div>
+                <h1>📈 AI 智慧選股高手</h1>
+                <p class="app-version">v3.0 - 技術分析專業版</p>
+            </div>
+            <a href="/settings" style="color: white; text-decoration: none; background: rgba(255,255,255,0.2); padding: 10px 20px; border-radius: 8px; transition: all 0.3s;" onmouseover="this.style.background='rgba(255,255,255,0.3)'" onmouseout="this.style.background='rgba(255,255,255,0.2)'">⚙️ 設置</a>
         </div>
 
         <!-- 登入面板 -->
@@ -565,6 +682,26 @@
 
                         <div class="favorites-list-panel" id="favoritesListPanel">
                             <div class="loading">載入中...</div>
+                        </div>
+                    </div>
+
+                    <!-- AI 助手 -->
+                    <div class="ai-chat-container">
+                        <div class="ai-chat-header">
+                            <h4>🤖 AI 投資助手</h4>
+                            <select class="ai-provider-select" id="aiProvider">
+                                <option value="openai">OpenAI GPT</option>
+                                <option value="gemini">Google Gemini</option>
+                            </select>
+                        </div>
+                        <div class="ai-messages" id="aiMessages">
+                            <div class="ai-message assistant">
+                                嗨！我是您的AI投資助手。您可以問我關於股票分析、技術指標、投資策略等問題。
+                            </div>
+                        </div>
+                        <div class="ai-input-container">
+                            <input type="text" class="ai-input" id="aiInput" placeholder="詢問股票問題...">
+                            <button class="ai-send-btn" id="aiSendBtn">發送</button>
                         </div>
                     </div>
                 </div>
@@ -717,11 +854,76 @@
                     currentStockData = data;
                     displayStockData(data);
                     document.getElementById('addFavoriteBtn').style.display = 'block';
+                    
+                    // 自動觸發 AI 分析
+                    autoAnalyzeStock(stockCode);
                 } else {
                     alert(data.message || '查詢失敗');
                 }
             } catch (error) {
                 alert('查詢出錯：' + error.message);
+            }
+        }
+
+        // 自動分析股票
+        async function autoAnalyzeStock(stockCode) {
+            const messagesDiv = document.getElementById('aiMessages');
+            
+            // 顯示分析中訊息
+            const loadingMsg = document.createElement('div');
+            loadingMsg.className = 'ai-message assistant';
+            loadingMsg.innerHTML = '⏳ 正在分析股票數據，請稍候...';
+            messagesDiv.appendChild(loadingMsg);
+            messagesDiv.scrollTop = messagesDiv.scrollHeight;
+            
+            try {
+                const response = await fetch(`/api/analyze/stock/${stockCode}`);
+                const result = await response.json();
+                
+                // 移除載入訊息
+                messagesDiv.removeChild(loadingMsg);
+                
+                if (result.success) {
+                    const analysis = result.analysis;
+                    
+                    // 顯示分析結果
+                    const analysisMsg = document.createElement('div');
+                    analysisMsg.className = 'ai-message assistant';
+                    analysisMsg.innerHTML = `
+                        <strong>📊 ${analysis.stock_code} - ${analysis.stock_name} 完整分析</strong><br><br>
+                        
+                        <strong>💰 價格分析：</strong><br>
+                        當前價格：${analysis.current_price.toFixed(2)} 元<br>
+                        年度高點：${analysis.year_high.toFixed(2)} 元<br>
+                        年度低點：${analysis.year_low.toFixed(2)} 元<br>
+                        價格位置：${analysis.price_position}%<br><br>
+                        
+                        ${analysis.news && analysis.news.length > 0 ? `
+                        <strong>📰 最新新聞：</strong><br>
+                        ${analysis.news.map(n => `• ${n.title}`).join('<br>')}<br><br>
+                        ` : ''}
+                        
+                        <strong>🤖 AI 投資建議：</strong><br>
+                        <div style="background: rgba(74, 111, 165, 0.2); padding: 10px; border-radius: 6px; margin-top: 8px; white-space: pre-wrap;">
+                        ${analysis.ai_recommendation}
+                        </div>
+                    `;
+                    messagesDiv.appendChild(analysisMsg);
+                    messagesDiv.scrollTop = messagesDiv.scrollHeight;
+                } else {
+                    const errorMsg = document.createElement('div');
+                    errorMsg.className = 'ai-message assistant';
+                    errorMsg.textContent = '❌ ' + (result.message || '分析失敗');
+                    messagesDiv.appendChild(errorMsg);
+                    messagesDiv.scrollTop = messagesDiv.scrollHeight;
+                }
+            } catch (error) {
+                messagesDiv.removeChild(loadingMsg);
+                const errorMsg = document.createElement('div');
+                errorMsg.className = 'ai-message assistant';
+                errorMsg.textContent = '❌ 分析出錯：' + error.message;
+                messagesDiv.appendChild(errorMsg);
+                messagesDiv.scrollTop = messagesDiv.scrollHeight;
             }
         }
 
@@ -1243,6 +1445,88 @@
             document.getElementById(tabName).classList.add('active');
         }
 
+        // AI 聊天功能
+        async function sendAIMessage() {
+            const input = document.getElementById('aiInput');
+            const message = input.value.trim();
+            const provider = document.getElementById('aiProvider').value;
+            const sendBtn = document.getElementById('aiSendBtn');
+            const messagesContainer = document.getElementById('aiMessages');
+            
+            if (!message) return;
+            
+            // 添加使用者訊息
+            const userMsg = document.createElement('div');
+            userMsg.className = 'ai-message user';
+            userMsg.textContent = message;
+            messagesContainer.appendChild(userMsg);
+            
+            // 清空輸入框
+            input.value = '';
+            
+            // 禁用發送按鈕
+            sendBtn.disabled = true;
+            sendBtn.textContent = '思考中...';
+            
+            // 滾動到底部
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+            
+            try {
+                const response = await fetch('/api/ai/chat', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        message: message,
+                        provider: provider,
+                        stock_context: currentStockData
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    const assistantMsg = document.createElement('div');
+                    assistantMsg.className = 'ai-message assistant';
+                    assistantMsg.textContent = data.reply;
+                    messagesContainer.appendChild(assistantMsg);
+                } else {
+                    const errorMsg = document.createElement('div');
+                    errorMsg.className = 'ai-message system';
+                    errorMsg.textContent = data.message || 'AI 回應失敗';
+                    messagesContainer.appendChild(errorMsg);
+                }
+            } catch (error) {
+                const errorMsg = document.createElement('div');
+                errorMsg.className = 'ai-message system';
+                errorMsg.textContent = '連接失敗：' + error.message;
+                messagesContainer.appendChild(errorMsg);
+            } finally {
+                // 恢復發送按鈕
+                sendBtn.disabled = false;
+                sendBtn.textContent = '發送';
+                
+                // 滾動到底部
+                messagesContainer.scrollTop = messagesContainer.scrollHeight;
+            }
+        }
+
+        // 載入可用的 AI 提供者
+        async function loadAIProviders() {
+            try {
+                const response = await fetch('/api/ai/providers');
+                const data = await response.json();
+                
+                if (data.success && data.providers.length > 0) {
+                    const select = document.getElementById('aiProvider');
+                    select.innerHTML = data.providers.map(p => 
+                        `<option value="${p.id}">${p.name}</option>`
+                    ).join('');
+                }
+            } catch (error) {
+                console.error('載入 AI 提供者失敗：', error);
+            }
+        }
+
         // 初始化
         document.addEventListener('DOMContentLoaded', function() {
             // 登入按鈕
@@ -1256,6 +1540,9 @@
             // 關注清單按鈕
             document.getElementById('toggleAddBtn').addEventListener('click', toggleAddForm);
             document.getElementById('confirmAddBtn').addEventListener('click', addFavoriteNew);
+            
+            // AI 聊天按鈕
+            document.getElementById('aiSendBtn').addEventListener('click', sendAIMessage);
             
             // Enter 鍵登入
             document.getElementById('password').addEventListener('keypress', function(e) {
@@ -1272,12 +1559,20 @@
                 if (e.key === 'Enter') addFavoriteNew();
             });
             
+            // Enter 鍵發送 AI 訊息
+            document.getElementById('aiInput').addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') sendAIMessage();
+            });
+            
             // 標籤切換
             document.querySelectorAll('.tab').forEach(tab => {
                 tab.addEventListener('click', function() {
                     switchTab(this.getAttribute('data-tab'));
                 });
             });
+            
+            // 載入 AI 提供者
+            loadAIProviders();
         });
     </script>
 </body>

@@ -1,0 +1,511 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>系統設置 - PecuniaNexus</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Microsoft JhengHei', 'Segoe UI', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .header h1 {
+            font-size: 28px;
+            font-weight: 600;
+        }
+
+        .back-btn {
+            background: rgba(255,255,255,0.2);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            text-decoration: none;
+            transition: all 0.3s;
+        }
+
+        .back-btn:hover {
+            background: rgba(255,255,255,0.3);
+            transform: translateY(-2px);
+        }
+
+        .content {
+            padding: 30px;
+        }
+
+        .section {
+            margin-bottom: 30px;
+            padding: 25px;
+            background: #f8f9fa;
+            border-radius: 12px;
+        }
+
+        .section-title {
+            font-size: 20px;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #667eea;
+        }
+
+        .model-list {
+            display: grid;
+            gap: 15px;
+        }
+
+        .model-item {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            transition: all 0.3s;
+        }
+
+        .model-item:hover {
+            box-shadow: 0 4px 12px rgba(0,0,0,0.12);
+            transform: translateY(-2px);
+        }
+
+        .model-info {
+            flex: 1;
+        }
+
+        .model-name {
+            font-size: 16px;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 5px;
+        }
+
+        .model-size {
+            font-size: 14px;
+            color: #666;
+        }
+
+        .model-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .btn {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.3s;
+            font-weight: 500;
+        }
+
+        .btn-primary {
+            background: #667eea;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #5568d3;
+            transform: translateY(-2px);
+        }
+
+        .btn-danger {
+            background: #e74c3c;
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background: #c0392b;
+        }
+
+        .btn-success {
+            background: #27ae60;
+            color: white;
+        }
+
+        .btn-success:hover {
+            background: #229954;
+        }
+
+        .download-section {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .input-group {
+            flex: 1;
+            display: flex;
+            gap: 10px;
+        }
+
+        .input-group input {
+            flex: 1;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: all 0.3s;
+        }
+
+        .input-group input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 20px;
+            color: #666;
+        }
+
+        .loading.show {
+            display: block;
+        }
+
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 10px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .alert {
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            display: none;
+        }
+
+        .alert.show {
+            display: block;
+        }
+
+        .alert-success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .alert-error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 600;
+            margin-left: 10px;
+        }
+
+        .badge-default {
+            background: #27ae60;
+            color: white;
+        }
+
+        .recommended-models {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .model-card {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            border: 2px solid #e0e0e0;
+        }
+
+        .model-card:hover {
+            border-color: #667eea;
+            transform: translateY(-2px);
+        }
+
+        .model-card h4 {
+            color: #333;
+            margin-bottom: 5px;
+        }
+
+        .model-card p {
+            color: #666;
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>⚙️ 系統設置</h1>
+            <a href="/" class="back-btn">← 返回首頁</a>
+        </div>
+
+        <div class="content">
+            <div id="alertBox" class="alert"></div>
+
+            <div class="section">
+                <div class="section-title">📥 下載 Ollama 模型</div>
+                
+                <div class="download-section">
+                    <div class="input-group">
+                        <input type="text" id="modelInput" placeholder="輸入模型名稱（例如：llama2, llama3.2, mistral）">
+                        <button class="btn btn-primary" onclick="downloadModel()">下載模型</button>
+                    </div>
+                </div>
+
+                <div class="recommended-models">
+                    <div class="model-card" onclick="quickDownload('llama2')">
+                        <h4>Llama 2</h4>
+                        <p>7B 參數<br>推薦：入門</p>
+                    </div>
+                    <div class="model-card" onclick="quickDownload('llama3.2')">
+                        <h4>Llama 3.2</h4>
+                        <p>3B 參數<br>快速響應</p>
+                    </div>
+                    <div class="model-card" onclick="quickDownload('mistral')">
+                        <h4>Mistral</h4>
+                        <p>7B 參數<br>高質量</p>
+                    </div>
+                    <div class="model-card" onclick="quickDownload('qwen2.5:7b')">
+                        <h4>Qwen 2.5</h4>
+                        <p>7B 參數<br>中文優化</p>
+                    </div>
+                </div>
+            </div>
+
+            <div id="loadingBox" class="loading">
+                <div class="spinner"></div>
+                <p>正在下載模型，請稍候...</p>
+            </div>
+
+            <div class="section">
+                <div class="section-title">🤖 已安裝的模型</div>
+                <div id="modelList" class="model-list">
+                    <div class="loading show">
+                        <div class="spinner"></div>
+                        <p>加載中...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let defaultModel = '';
+
+        async function loadModels() {
+            try {
+                const response = await fetch('/api/ollama/models');
+                const data = await response.json();
+                
+                if (data.success) {
+                    displayModels(data.models);
+                } else {
+                    showAlert(data.message, 'error');
+                }
+            } catch (error) {
+                showAlert('加載模型列表失敗: ' + error.message, 'error');
+            }
+        }
+
+        async function loadDefaultModel() {
+            try {
+                const response = await fetch('/api/ollama/default-model');
+                const data = await response.json();
+                
+                if (data.success) {
+                    defaultModel = data.model;
+                }
+            } catch (error) {
+                console.error('加載默認模型失敗:', error);
+            }
+        }
+
+        function displayModels(models) {
+            const listDiv = document.getElementById('modelList');
+            
+            if (models.length === 0) {
+                listDiv.innerHTML = '<p style="text-align:center;color:#666;">尚未安裝任何模型，請先下載模型</p>';
+                return;
+            }
+
+            listDiv.innerHTML = models.map(model => {
+                const isDefault = model.name === defaultModel;
+                return `
+                    <div class="model-item">
+                        <div class="model-info">
+                            <div class="model-name">
+                                ${model.name}
+                                ${isDefault ? '<span class="badge badge-default">默認</span>' : ''}
+                            </div>
+                            <div class="model-size">大小: ${formatSize(model.size)}</div>
+                        </div>
+                        <div class="model-actions">
+                            ${!isDefault ? `<button class="btn btn-success" onclick="setDefaultModel('${model.name}')">設為默認</button>` : ''}
+                            <button class="btn btn-danger" onclick="deleteModel('${model.name}')">刪除</button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function formatSize(bytes) {
+            if (bytes === 0) return '0 B';
+            const k = 1024;
+            const sizes = ['B', 'KB', 'MB', 'GB', 'TB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return (bytes / Math.pow(k, i)).toFixed(2) + ' ' + sizes[i];
+        }
+
+        async function downloadModel() {
+            const input = document.getElementById('modelInput');
+            const modelName = input.value.trim();
+            
+            if (!modelName) {
+                showAlert('請輸入模型名稱', 'error');
+                return;
+            }
+
+            const loadingBox = document.getElementById('loadingBox');
+            loadingBox.classList.add('show');
+            
+            try {
+                const response = await fetch('/api/ollama/models/pull', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ model_name: modelName })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    showAlert(data.message, 'success');
+                    input.value = '';
+                    await loadModels();
+                } else {
+                    showAlert(data.message, 'error');
+                }
+            } catch (error) {
+                showAlert('下載失敗: ' + error.message, 'error');
+            } finally {
+                loadingBox.classList.remove('show');
+            }
+        }
+
+        function quickDownload(modelName) {
+            document.getElementById('modelInput').value = modelName;
+            downloadModel();
+        }
+
+        async function deleteModel(modelName) {
+            if (!confirm(`確定要刪除模型 ${modelName} 嗎？`)) {
+                return;
+            }
+
+            try {
+                const response = await fetch('/api/ollama/models/delete', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ model_name: modelName })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    showAlert(data.message, 'success');
+                    await loadModels();
+                } else {
+                    showAlert(data.message, 'error');
+                }
+            } catch (error) {
+                showAlert('刪除失敗: ' + error.message, 'error');
+            }
+        }
+
+        async function setDefaultModel(modelName) {
+            try {
+                const response = await fetch('/api/ollama/default-model', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ model_name: modelName })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    showAlert(data.message, 'success');
+                    defaultModel = modelName;
+                    await loadModels();
+                } else {
+                    showAlert(data.message, 'error');
+                }
+            } catch (error) {
+                showAlert('設置失敗: ' + error.message, 'error');
+            }
+        }
+
+        function showAlert(message, type) {
+            const alertBox = document.getElementById('alertBox');
+            alertBox.className = `alert alert-${type} show`;
+            alertBox.textContent = message;
+            
+            setTimeout(() => {
+                alertBox.classList.remove('show');
+            }, 5000);
+        }
+
+        // 頁面加載時執行
+        window.onload = async function() {
+            await loadDefaultModel();
+            await loadModels();
+        };
+    </script>
+</body>
+</html>
